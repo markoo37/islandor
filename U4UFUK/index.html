@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Islandors</title>
+  <!-- jQuery és jQuery UI (órai minta) -->
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/ui-lightness/jquery-ui.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+</head>
+<body class="theme-light">
+  <div id="wrap">
+    <h1 id="main-title">Islandors</h1>
+
+    <div id="layout">
+      <!-- Bal panel: piros játékos -->
+      <aside id="panel-left" class="info-panel">
+        <h2>Piros játékos</h2>
+        <p>Fa: <span id="res-red-wood">0</span></p>
+        <p>Arany: <span id="res-red-gold">0</span></p>
+        <p>Bázis élet: <span id="hp-red-base">0</span></p>
+        <p class="turn-mark" id="turn-red">—</p>
+      </aside>
+
+      <main id="center">
+        <div id="toolbar">
+          <button type="button" id="btn-new">Új játék</button>
+          <button type="button" id="btn-save">Mentés</button>
+          <button type="button" id="btn-load">Betöltés</button>
+          <button type="button" id="btn-help">Súgó</button>
+          <button type="button" id="btn-theme">Téma váltás</button>
+          <button type="button" id="btn-endturn">Kör vége</button>
+        </div>
+        <div id="toolbar2">
+          <label>Köridő (mp):
+            <select id="cfg-turnsec">
+              <option value="30">30</option>
+              <option value="60" selected>60</option>
+              <option value="90">90</option>
+            </select>
+          </label>
+          <button type="button" id="btn-build-miner">Bányász gyártása</button>
+          <button type="button" id="btn-build-soldier">Katona gyártása</button>
+          <button type="button" id="btn-build-scout">Felderítő gyártása</button>
+        </div>
+        <p id="status-line">Állapot</p>
+        <p id="timer-line">Köridő: <span id="timer-val">60</span> mp</p>
+        <div id="board"></div>
+      </main>
+
+      <!-- Jobb panel: kék játékos -->
+      <aside id="panel-right" class="info-panel">
+        <h2>Kék játékos</h2>
+        <p>Fa: <span id="res-blue-wood">0</span></p>
+        <p>Arany: <span id="res-blue-gold">0</span></p>
+        <p>Bázis élet: <span id="hp-blue-base">0</span></p>
+        <p class="turn-mark" id="turn-blue">—</p>
+      </aside>
+    </div>
+
+    <div id="help-box" title="Súgó — Islandors" style="display:none;">
+      <p><strong>Cél:</strong> Pusztítsd el az ellenfél bázisát, vagy szerezz győzelmet, ha az ellenfélnek nincs egysége.</p>
+      <p><strong>Kör:</strong> Mindig egy játékos lép. Válassz egységet kattintással, majd kattints egy üres mezőre a mozgáshoz. Katonával az ellenséges egységre kattintva támadás.</p>
+      <p><strong>Bányász:</strong> Ha erdőre vagy aranymezőre lép, gyűjt nyersanyagot. <strong>Katona:</strong> harc. <strong>Felderítő:</strong> messzebb mozog.</p>
+      <p><strong>Gombok:</strong> Gyártás a bázis melletti üres mezőre kerül. A köridő lejártakor automatikusan kör vége. <strong>Enter:</strong> kör vége.</p>
+    </div>
+
+    <footer id="footer-creator">
+      Készítette: Spitz Márk -<span id="neptun-placeholder">U4UFUK</span>
+    </footer>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
