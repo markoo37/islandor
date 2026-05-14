@@ -1,4 +1,4 @@
-/* Islandors — egyszerű, órai stílus */
+/* Islandors — letisztult, olvasható megjelenés */
 
 * {
   box-sizing: border-box;
@@ -7,137 +7,414 @@
 body {
   font-family: Arial, Helvetica, sans-serif;
   margin: 0;
-  padding: 12px;
-  background: #e8e8e8;
-  color: #222;
+  padding: 16px;
+  background: #e9eef2;
+  color: #1a1a1a;
+  line-height: 1.35;
 }
 
 body.theme-dark {
-  background: #2a2a2a;
-  color: #eee;
+  background: #1e2226;
+  color: #e8eaed;
 }
 
 #wrap {
-  max-width: 1100px;
+  max-width: 1040px;
   margin: 0 auto;
 }
 
 #main-title {
   text-align: center;
-  margin: 8px 0 16px;
-  font-size: 1.8rem;
+  margin: 0 0 18px;
+  font-size: 1.85rem;
+  font-weight: bold;
+  letter-spacing: 0.02em;
+}
+
+body.theme-dark #main-title {
+  color: #f0f0f0;
 }
 
 #layout {
+  display: block;
+}
+
+/* Játékos kártyák a tábla két oldalán */
+.board-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  align-items: center;
   justify-content: center;
-  align-items: flex-start;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+@media (max-width: 720px) {
+  .board-row {
+    flex-direction: column;
+  }
+
+  .info-panel {
+    width: 100%;
+    max-width: 320px;
+    min-height: 0;
+  }
+}
+
+#board-wrap {
+  flex: 0 0 auto;
 }
 
 .info-panel {
-  width: 160px;
-  border: 2px solid #888;
-  padding: 10px;
-  background: #f5f5f5;
-  min-height: 200px;
+  width: 158px;
+  flex: 0 0 auto;
+  border: 1px solid #b0b8c0;
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  min-height: 180px;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 body.theme-dark .info-panel {
-  background: #3d3d3d;
-  border-color: #666;
+  background: #2d333b;
+  border-color: #4a5563;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* Aktív játékos: enyhe kiemelés */
+.info-panel-red.info-panel-active {
+  background: #fef2f2;
+  border-color: #f87171;
+  box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.35), 0 4px 16px rgba(185, 28, 28, 0.12);
+}
+
+.info-panel-blue.info-panel-active {
+  background: #eff6ff;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.4), 0 4px 16px rgba(29, 78, 216, 0.12);
+}
+
+body.theme-dark .info-panel-red.info-panel-active {
+  background: #3b2528;
+  border-color: #f87171;
+  box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.45), 0 4px 18px rgba(0, 0, 0, 0.45);
+}
+
+body.theme-dark .info-panel-blue.info-panel-active {
+  background: #252f3e;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.45), 0 4px 18px rgba(0, 0, 0, 0.45);
 }
 
 .info-panel h2 {
-  font-size: 1rem;
-  margin: 0 0 10px;
+  font-size: 1.05rem;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #dde2e8;
+}
+
+body.theme-dark .info-panel h2 {
+  border-bottom-color: #4a5563;
 }
 
 #panel-left h2 {
-  color: #c00;
+  color: #b91c1c;
 }
 
 #panel-right h2 {
-  color: #039;
+  color: #1d4ed8;
+}
+
+body.theme-dark #panel-left h2 {
+  color: #f87171;
+}
+
+body.theme-dark #panel-right h2 {
+  color: #60a5fa;
+}
+
+.info-panel p {
+  margin: 6px 0;
+  font-size: 0.92rem;
 }
 
 .turn-mark {
   font-weight: bold;
-  margin-top: 12px;
+  margin-top: 14px;
+  font-size: 0.95rem;
 }
 
 #center {
-  flex: 1 1 420px;
-  max-width: 520px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
-#toolbar, #toolbar2 {
-  margin-bottom: 8px;
+/* ——— Vezérlők: soronként csoportosítva ——— */
+.controls {
+  background: #fff;
+  border: 1px solid #c5cdd6;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
-#toolbar button, #toolbar2 button {
-  margin: 2px 4px 2px 0;
-  padding: 6px 8px;
-  font-size: 0.85rem;
+body.theme-dark .controls {
+  background: #2d333b;
+  border-color: #4a5563;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.control-row:last-child {
+  margin-bottom: 0;
+}
+
+.control-row-build {
+  align-items: stretch;
+}
+
+.row-label {
+  flex: 0 0 72px;
+  font-size: 0.72rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #5c6570;
+  align-self: center;
+}
+
+body.theme-dark .row-label {
+  color: #9ca3af;
+}
+
+.btn-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-cluster-grow {
+  align-items: center;
+}
+
+.btn-cluster-build {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+  flex: 1;
+}
+
+@media (max-width: 520px) {
+  .btn-cluster-build {
+    grid-template-columns: 1fr;
+  }
+}
+
+.btn-ctrl {
+  padding: 8px 12px;
+  font-size: 0.88rem;
   cursor: pointer;
+  border: 1px solid #9aa3ad;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #fafbfc 0%, #e8ebef 100%);
+  color: #222;
+}
+
+.btn-ctrl:hover {
+  background: linear-gradient(180deg, #fff 0%, #eef1f5 100%);
+  border-color: #6b7280;
+}
+
+.btn-ctrl:active {
+  transform: translateY(1px);
+}
+
+body.theme-dark .btn-ctrl {
+  background: linear-gradient(180deg, #3d4654 0%, #323a47 100%);
+  border-color: #5c6570;
+  color: #e8eaed;
+}
+
+body.theme-dark .btn-ctrl:hover {
+  background: linear-gradient(180deg, #4a5568 0%, #3d4654 100%);
+  border-color: #9ca3af;
+}
+
+.btn-primary {
+  font-weight: bold;
+  border-color: #2563eb;
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+  border-color: #1d4ed8;
+  color: #fff;
+}
+
+body.theme-dark .btn-primary {
+  border-color: #3b82f6;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+  color: #fff;
+}
+
+.inline-label {
+  font-size: 0.88rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+.select-turn {
+  padding: 6px 8px;
+  font-size: 0.88rem;
+  border-radius: 6px;
+  border: 1px solid #9aa3ad;
+  background: #fff;
+  cursor: pointer;
+}
+
+body.theme-dark .select-turn {
+  background: #1e2226;
+  border-color: #6b7280;
+  color: #e8eaed;
+}
+
+/* Gyártás: költség a gomb második sorában */
+.btn-build {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 8px;
+  min-height: 64px;
+  cursor: pointer;
+  border: 1px solid #7c9885;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%);
+  color: #1b4332;
+}
+
+.btn-build:hover {
+  background: linear-gradient(180deg, #f1f8f2 0%, #d4ecd6 100%);
+  border-color: #2d6a4f;
+}
+
+body.theme-dark .btn-build {
+  background: linear-gradient(180deg, #2d4a35 0%, #1e3a2a 100%);
+  border-color: #40916c;
+  color: #d8f3dc;
+}
+
+body.theme-dark .btn-build:hover {
+  background: linear-gradient(180deg, #3d5c45 0%, #2d4a35 100%);
+}
+
+.btn-build-title {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.btn-build-cost {
+  font-size: 0.72rem;
+  font-weight: normal;
+  opacity: 0.92;
+  line-height: 1.2;
 }
 
 #status-line {
   font-weight: bold;
-  min-height: 1.4em;
+  min-height: 1.45em;
+  margin: 8px 0 4px;
 }
 
 #timer-line {
-  margin: 4px 0 8px;
+  margin: 0 0 10px;
+  font-size: 0.95rem;
 }
 
-/* Pálya: statikus négyzetrács */
+body.theme-dark #timer-line {
+  color: #d1d5db;
+}
+
+/* Pálya */
 #board {
   display: grid;
-  grid-template-columns: repeat(8, 48px);
-  grid-template-rows: repeat(8, 48px);
+  grid-template-columns: repeat(8, 56px);
+  grid-template-rows: repeat(8, 56px);
   gap: 2px;
-  background: #555;
-  padding: 2px;
-  border: 3px solid #333;
+  background: #4b5563;
+  padding: 3px;
+  border-radius: 8px;
+  border: 2px solid #374151;
   margin: 0 auto;
   width: fit-content;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+body.theme-dark #board {
+  background: #111827;
+  border-color: #1f2937;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
 }
 
 .cell {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   background: #c8e6c9;
   position: relative;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 10px;
   text-align: center;
   line-height: 1.1;
   padding: 2px;
   overflow: hidden;
   user-select: none;
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 body.theme-dark .cell {
-  background: #2e4a32;
+  background: #264653;
   color: #eee;
 }
 
 .cell.base-red {
-  background: #ffcccc;
+  background: #fecaca;
 }
 
 .cell.base-blue {
-  background: #cce0ff;
+  background: #bfdbfe;
 }
 
 body.theme-dark .cell.base-red {
-  background: #663333;
+  background: #7f1d1d;
 }
 
 body.theme-dark .cell.base-blue {
-  background: #224466;
+  background: #1e3a8a;
 }
 
 .cell.wood {
@@ -145,67 +422,166 @@ body.theme-dark .cell.base-blue {
 }
 
 .cell.gold {
-  background: #fff9c4;
+  background: #fef08a;
 }
 
 body.theme-dark .cell.wood {
-  background: #3d5c3f;
+  background: #3f6212;
 }
 
 body.theme-dark .cell.gold {
-  background: #6b5c20;
+  background: #854d0e;
 }
 
-/* Dinamikus: kijelölés */
 .cell.selected {
-  outline: 3px solid #ff0;
+  outline: 3px solid #eab308;
   outline-offset: -2px;
   z-index: 2;
 }
 
 .cell.move-hint {
-  box-shadow: inset 0 0 0 3px rgba(0, 200, 255, 0.7);
+  box-shadow: inset 0 0 0 3px rgba(56, 189, 248, 0.85);
 }
 
 .cell.attack-hint {
-  box-shadow: inset 0 0 0 3px rgba(255, 80, 80, 0.8);
+  box-shadow: inset 0 0 0 3px rgba(248, 113, 113, 0.9);
 }
 
-.unit-label {
-  font-weight: bold;
-  margin-top: 2px;
-}
-
-.unit-red {
-  color: #900;
-}
-
-.unit-blue {
-  color: #006;
-}
-
-body.theme-dark .unit-red {
-  color: #f88;
-}
-
-body.theme-dark .unit-blue {
-  color: #8cf;
-}
-
-.terrain-icon {
-  font-size: 14px;
+/* Pálya elemek feliratai */
+.terrain-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   line-height: 1;
+  flex-shrink: 0;
+}
+
+.terrain-ic {
+  font-size: 15px;
+}
+
+.terrain-lbl {
+  font-size: 8px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-top: 1px;
+  color: #1a3320;
+}
+
+body.theme-dark .terrain-lbl {
+  color: #c8e6c9;
+}
+
+.terrain-base-lbl .terrain-lbl {
+  font-size: 7px;
+}
+
+/* Egység kártya a cellában */
+.unit-stack {
+  /* align-items:center a .cell-en összenyomná a kártyát — stretch = mindig teljes szélesség */
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-top: 1px;
+  padding: 2px 3px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 1.15;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 0;
+}
+
+.unit-side-red {
+  background: rgba(254, 226, 226, 0.95);
+  border: 1px solid #b91c1c;
+  color: #7f1d1d;
+}
+
+.unit-side-blue {
+  background: rgba(219, 234, 254, 0.95);
+  border: 1px solid #1d4ed8;
+  color: #1e3a8a;
+}
+
+body.theme-dark .unit-side-red {
+  background: rgba(127, 29, 29, 0.9);
+  border-color: #f87171;
+  color: #fecaca;
+}
+
+body.theme-dark .unit-side-blue {
+  background: rgba(30, 58, 138, 0.9);
+  border-color: #60a5fa;
+  color: #dbeafe;
+}
+
+.unit-topline {
+  font-size: 10px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+}
+
+.unit-emoji {
+  font-size: 13px;
+}
+
+.unit-code {
+  font-weight: bold;
+}
+
+.unit-name {
+  font-size: 8px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 1px;
+}
+
+.unit-hp {
+  font-size: 9px;
+  font-weight: bold;
+  margin-top: 1px;
+}
+
+/* Mozgás közben lebegő másolat — stretch, hogy a .unit-stack szélessége egyezzen a cellával */
+.unit-move-floater {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 2px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 4px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+}
+
+body.theme-dark .unit-move-floater {
+  background: rgba(45, 51, 59, 0.95);
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.55);
 }
 
 #footer-creator {
-  margin-top: 24px;
+  margin-top: 28px;
   text-align: center;
   font-size: 0.9rem;
-  color: #555;
+  color: #5c6570;
 }
 
 body.theme-dark #footer-creator {
-  color: #aaa;
+  color: #9ca3af;
 }
 
 #neptun-placeholder {

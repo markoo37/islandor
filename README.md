@@ -5,7 +5,7 @@ Egyszerű, **két játékosos**, **körökre osztott** stratégiai játék ugyan
 ## Mi a játék?
 
 - **Pálya:** 8×8 négyzetrács. Mindkét játékosnak van egy **bázisa** (piros: bal felső, kék: jobb alsó sarok).
-- **Nyersanyagok:** a pályán **fa** (erdő) és **arany** mezők vannak; ezeket a **bányász** tudja összegyűjteni.
+- **Nyersanyagok:** a pályán sok **fa** (erdő) és **arany** mező van; a **bányász** rálépéskor **+3 fa** vagy **+3 arany** gyűjtést kap (a mező kiürül). Kezdéskor mindkét játékosnak **6 fa és 6 arany** jár.
 - **Egységek:**
   - **Bányász (B):** gyűjtés; egy mezőt lép körbenként (négy irány).
   - **Katona (K):** harc; egy mezőt lép; **2 sebzés** szomszédos ellenségre vagy ellenséges bázisra.
@@ -27,7 +27,7 @@ Egyszerű, **két játékosos**, **körökre osztott** stratégiai játék ugyan
 1. **Körök:** mindig az **aktuális játékos** lép (a bal/jobb panel jelzi: „Te jössz!”).
 2. **Kiválasztás:** kattints a **saját** egységedre. A kijelölt mező kiemelődik; a pálya jelzi a **mozgásra** és (ahol lehet) a **támadásra** alkalmas mezőket.
 3. **Mozgás:** kattints egy **oda léphető** üres vagy erőforrás mezőre.
-4. **Gyűjtés:** ha a **bányász** erdőre vagy arany mezőre lép, kapsz nyersanyagot, a mező kiürül.
+4. **Gyűjtés:** ha a **bányász** erdőre vagy arany mezőre lép, **+3** megfelelő nyersanyagot kapsz, a mező kiürül. A mozgás **rövid animációval** történik.
 5. **Támadás:** **katona** vagy **felderítő** kiválasztása után kattints egy **szomszédos ellenséges egységre**, vagy — ha mellette állsz — az **ellenséges bázis** mezőjére. A bányász nem támad.
 6. **Gyártás:** a **Bányász / Katona / Felderítő gyártása** gombokkal új egységet hozol létre, ha van elég fa és arany (lásd fent: **Gyártási költségek**); az egység a **bázis melletti üres** mezőre kerül.
 7. **Kör vége:** **Kör vége** gomb, vagy **Enter**. Ha lejár a **köridő**, a kör magától véget ér.

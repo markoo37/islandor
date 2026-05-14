@@ -15,55 +15,80 @@
     <h1 id="main-title">Islandors</h1>
 
     <div id="layout">
-      <!-- Bal panel: piros játékos -->
-      <aside id="panel-left" class="info-panel">
-        <h2>Piros játékos</h2>
-        <p>Fa: <span id="res-red-wood">0</span></p>
-        <p>Arany: <span id="res-red-gold">0</span></p>
-        <p>Bázis élet: <span id="hp-red-base">0</span></p>
-        <p class="turn-mark" id="turn-red">—</p>
-      </aside>
-
       <main id="center">
-        <div id="toolbar">
-          <button type="button" id="btn-new">Új játék</button>
-          <button type="button" id="btn-save">Mentés</button>
-          <button type="button" id="btn-load">Betöltés</button>
-          <button type="button" id="btn-help">Súgó</button>
-          <button type="button" id="btn-theme">Téma váltás</button>
-          <button type="button" id="btn-endturn">Kör vége</button>
-        </div>
-        <div id="toolbar2">
-          <label>Köridő (mp):
-            <select id="cfg-turnsec">
-              <option value="30">30</option>
-              <option value="60" selected>60</option>
-              <option value="90">90</option>
-            </select>
-          </label>
-          <button type="button" id="btn-build-miner">Bányász gyártása</button>
-          <button type="button" id="btn-build-soldier">Katona gyártása</button>
-          <button type="button" id="btn-build-scout">Felderítő gyártása</button>
+        <div class="controls" id="controls">
+          <div class="control-row">
+            <span class="row-label">Játék</span>
+            <div class="btn-cluster">
+              <button type="button" id="btn-new" class="btn-ctrl">Új játék</button>
+              <button type="button" id="btn-save" class="btn-ctrl">Mentés</button>
+              <button type="button" id="btn-load" class="btn-ctrl">Betöltés</button>
+              <button type="button" id="btn-help" class="btn-ctrl">Súgó</button>
+            </div>
+          </div>
+          <div class="control-row">
+            <span class="row-label">Kör</span>
+            <div class="btn-cluster btn-cluster-grow">
+              <button type="button" id="btn-theme" class="btn-ctrl">Téma váltás</button>
+              <button type="button" id="btn-endturn" class="btn-ctrl btn-primary">Kör vége</button>
+              <label class="inline-label">Köridő (mp):
+                <select id="cfg-turnsec" class="select-turn">
+                  <option value="30">30</option>
+                  <option value="60" selected>60</option>
+                  <option value="90">90</option>
+                </select>
+              </label>
+            </div>
+          </div>
+          <div class="control-row control-row-build">
+            <span class="row-label">Gyártás</span>
+            <div class="btn-cluster btn-cluster-build">
+              <button type="button" id="btn-build-miner" class="btn-build" title="Bányász: gyűjtés, 1 mező lépés">
+                <span class="btn-build-title">Bányász</span>
+                <span class="btn-build-cost">2 fa · 1 arany</span>
+              </button>
+              <button type="button" id="btn-build-soldier" class="btn-build" title="Katona: harc, 2 sebzés">
+                <span class="btn-build-title">Katona</span>
+                <span class="btn-build-cost">2 fa · 2 arany</span>
+              </button>
+              <button type="button" id="btn-build-scout" class="btn-build" title="Felderítő: 2 mező lépés, 1 sebzés">
+                <span class="btn-build-title">Felderítő</span>
+                <span class="btn-build-cost">1 fa · 2 arany</span>
+              </button>
+            </div>
+          </div>
         </div>
         <p id="status-line">Állapot</p>
         <p id="timer-line">Köridő: <span id="timer-val">60</span> mp</p>
-        <div id="board"></div>
-      </main>
 
-      <!-- Jobb panel: kék játékos -->
-      <aside id="panel-right" class="info-panel">
-        <h2>Kék játékos</h2>
-        <p>Fa: <span id="res-blue-wood">0</span></p>
-        <p>Arany: <span id="res-blue-gold">0</span></p>
-        <p>Bázis élet: <span id="hp-blue-base">0</span></p>
-        <p class="turn-mark" id="turn-blue">—</p>
-      </aside>
+        <div class="board-row">
+          <aside id="panel-left" class="info-panel info-panel-red">
+            <h2>Piros játékos</h2>
+            <p>Fa: <span id="res-red-wood">0</span></p>
+            <p>Arany: <span id="res-red-gold">0</span></p>
+            <p>Bázis élet: <span id="hp-red-base">0</span></p>
+            <p class="turn-mark" id="turn-red">—</p>
+          </aside>
+
+          <div id="board-wrap">
+            <div id="board"></div>
+          </div>
+
+          <aside id="panel-right" class="info-panel info-panel-blue">
+            <h2>Kék játékos</h2>
+            <p>Fa: <span id="res-blue-wood">0</span></p>
+            <p>Arany: <span id="res-blue-gold">0</span></p>
+            <p>Bázis élet: <span id="hp-blue-base">0</span></p>
+            <p class="turn-mark" id="turn-blue">—</p>
+          </aside>
+        </div>
+      </main>
     </div>
 
     <div id="help-box" title="Súgó — Islandors" style="display:none;">
       <p><strong>Cél:</strong> Pusztítsd el az ellenfél bázisát, vagy szerezz győzelmet, ha az ellenfélnek nincs egysége.</p>
       <p><strong>Kör:</strong> Mindig egy játékos lép. Válassz egységet kattintással, majd kattints egy üres mezőre a mozgáshoz. Katonával az ellenséges egységre kattintva támadás.</p>
-      <p><strong>Bányász:</strong> Ha erdőre vagy aranymezőre lép, gyűjt nyersanyagot. <strong>Katona:</strong> harc. <strong>Felderítő:</strong> messzebb mozog.</p>
+      <p><strong>Bányász:</strong> Ha erdőre vagy aranymezőre lép, <strong>+3</strong> fa vagy arany (a mező kiürül). <strong>Katona:</strong> harc. <strong>Felderítő:</strong> messzebb mozog. A lépés animációval jelenik meg.</p>
       <p><strong>Gombok:</strong> Gyártás a bázis melletti üres mezőre kerül. A köridő lejártakor automatikusan kör vége. <strong>Enter:</strong> kör vége.</p>
     </div>
 
