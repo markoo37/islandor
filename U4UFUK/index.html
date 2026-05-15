@@ -13,11 +13,24 @@
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 </head>
-<body class="theme-light">
-  <div id="wrap">
+<body class="theme-light at-menu">
+  <div id="start-screen" class="start-screen" role="dialog" aria-label="Főmenü">
+    <div class="start-screen__bg" aria-hidden="true"></div>
+    <div class="start-panel">
+      <h1 class="start-title">Islandors</h1>
+      <p class="start-subtitle">Körökre osztott stratégiai játék</p>
+      <p class="start-tagline">Kétjátékos stratégiai játék</p>
+      <div class="start-actions">
+        <button type="button" id="btn-start-game" class="btn-start-primary">Játék indítása</button>
+        <button type="button" id="btn-load-menu" class="btn-start-secondary">Mentés betöltése</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="wrap" class="game-shell">
     <header class="game-header">
       <h1 id="main-title">Islandors</h1>
-      <p class="game-tagline">Tropikus stratégia a szigeten</p>
+      <p class="game-tagline">Stratégia a szigeten</p>
     </header>
 
     <div id="layout">
@@ -55,6 +68,7 @@
                 <button type="button" id="btn-theme" class="btn-ctrl">Téma váltás</button>
                 <button type="button" id="btn-help" class="btn-ctrl">Súgó</button>
                 <button type="button" id="btn-rules" class="btn-ctrl">Játékmenet</button>
+                <button type="button" id="btn-exit-menu" class="btn-ctrl">Kilépés</button>
               </div>
             </div>
           </div>

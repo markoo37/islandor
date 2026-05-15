@@ -6,11 +6,173 @@ var nextUnitId = 1;
 var selectedUnitId = null;
 var turnTimerHandle = null;
 var moveAnimationActive = false;
+var gameSessionActive = false;
+var startScreenDismissed = false;
 
 // gyűjtéskor ennyit ad egy mező (kevesebb mező mellett is lehet haladni)
 var GATHER_AMOUNT = 3;
 // átlépés animáció hossza (ms)
 var MOVE_ANIM_MS = 175;
+
+// Előre definiált, kiegyenlített pályák (6×6, tükrözött elrendezés)
+var MAP_SEEDS = [
+  {
+    name: "Klasszikus pálya",
+    resources: [
+      [2, 0, "gold"],
+      [1, 1, "wood"],
+      [4, 1, "gold"],
+      [2, 2, "wood"],
+      [3, 2, "gold"],
+      [2, 3, "gold"],
+      [3, 3, "wood"],
+      [1, 4, "gold"],
+      [4, 4, "wood"]
+    ]
+  },
+  {
+    name: "Középső mezők",
+    resources: [
+      [1, 2, "wood"],
+      [4, 3, "wood"],
+      [2, 1, "gold"],
+      [3, 4, "gold"],
+      [2, 2, "wood"],
+      [3, 3, "gold"],
+      [2, 3, "gold"],
+      [3, 2, "wood"]
+    ]
+  },
+  {
+    name: "Tükrözött szélek",
+    resources: [
+      [0, 2, "wood"],
+      [5, 3, "wood"],
+      [2, 0, "gold"],
+      [3, 5, "gold"],
+      [2, 5, "wood"],
+      [3, 0, "gold"],
+      [2, 2, "gold"],
+      [3, 3, "wood"]
+    ]
+  },
+  {
+    name: "Átlós csatorna",
+    resources: [
+      [2, 1, "wood"],
+      [3, 4, "wood"],
+      [1, 2, "gold"],
+      [4, 3, "gold"],
+      [2, 2, "gold"],
+      [3, 3, "wood"],
+      [1, 3, "wood"],
+      [4, 2, "gold"]
+    ]
+  },
+  {
+    name: "Keretezett központ",
+    resources: [
+      [1, 1, "wood"],
+      [4, 4, "wood"],
+      [1, 4, "gold"],
+      [4, 1, "gold"],
+      [2, 2, "wood"],
+      [3, 3, "gold"],
+      [2, 3, "gold"],
+      [3, 2, "wood"]
+    ]
+  },
+  {
+    name: "Kompakt központ",
+    resources: [
+      [2, 2, "wood"],
+      [3, 3, "wood"],
+      [2, 3, "gold"],
+      [3, 2, "gold"],
+      [1, 2, "wood"],
+      [4, 3, "gold"]
+    ]
+  },
+  {
+    name: "Oldalsó szigetek",
+    resources: [
+      [0, 3, "wood"],
+      [5, 2, "wood"],
+      [3, 0, "gold"],
+      [2, 5, "gold"],
+      [2, 2, "gold"],
+      [3, 3, "wood"],
+      [2, 3, "wood"],
+      [3, 2, "gold"]
+    ]
+  },
+  {
+    name: "Vegyes távolság",
+    resources: [
+      [2, 0, "wood"],
+      [3, 5, "wood"],
+      [0, 3, "gold"],
+      [5, 2, "gold"],
+      [2, 2, "gold"],
+      [3, 3, "wood"],
+      [1, 3, "wood"],
+      [4, 2, "gold"]
+    ]
+  },
+  {
+    name: "Szétszórt szigetek",
+    resources: [
+      [0, 4, "wood"],
+      [5, 1, "wood"],
+      [4, 0, "gold"],
+      [1, 5, "gold"],
+      [2, 2, "wood"],
+      [3, 3, "gold"],
+      [2, 3, "gold"],
+      [3, 2, "wood"]
+    ]
+  },
+  {
+    name: "Belső gyűrű",
+    resources: [
+      [1, 2, "wood"],
+      [4, 3, "wood"],
+      [2, 1, "wood"],
+      [3, 4, "gold"],
+      [2, 3, "gold"],
+      [3, 2, "gold"],
+      [2, 2, "gold"],
+      [3, 3, "wood"]
+    ]
+  }
+];
+
+var UNIT_DATA = {
+  miner: { name: "Bányász", symbol: "B", emoji: "⛏", hp: 2, damage: 0, moveRange: 1, costWood: 2, costGold: 1, canAttack: false },
+  soldier: { name: "Katona", symbol: "K", emoji: "⚔", hp: 4, damage: 3, moveRange: 1, costWood: 2, costGold: 2, canAttack: true },
+  scout: { name: "Felderítő", symbol: "F", emoji: "👁", hp: 2, damage: 1, moveRange: 2, costWood: 1, costGold: 2, canAttack: true }
+};
+
+var CARDINAL_DIRS = [
+  { dx: 1, dy: 0 },
+  { dx: -1, dy: 0 },
+  { dx: 0, dy: 1 },
+  { dx: 0, dy: -1 }
+];
+
+var TERRAIN_CLASS = {
+  base_red: "base-red",
+  base_blue: "base-blue",
+  wood: "wood",
+  gold: "gold"
+};
+
+var TERRAIN_BLOCKS = {
+  wood: '<div class="terrain-block"><span class="terrain-ic">🌲</span><span class="terrain-lbl">Fa</span></div>',
+  gold: '<div class="terrain-block"><span class="terrain-ic">💰</span><span class="terrain-lbl">Arany</span></div>',
+  base_red: '<div class="terrain-block terrain-base-lbl"><span class="terrain-ic">🏠</span><span class="terrain-lbl">Piros bázis</span></div>',
+  base_blue: '<div class="terrain-block terrain-base-lbl"><span class="terrain-ic">🏠</span><span class="terrain-lbl">Kék bázis</span></div>'
+};
 
 // --- Hang: egyszerű sípolás (AudioContext) ---
 function playSound(kind) {
@@ -39,23 +201,72 @@ function playSound(kind) {
   }
 }
 
-function deepCopy(obj) {
-  return JSON.parse(JSON.stringify(obj));
+function cellIndex(x, y) {
+  return y * BOARD_SIZE + x;
+}
+
+function cellKey(x, y) {
+  return x + "," + y;
+}
+
+function inBounds(x, y) {
+  return x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE;
+}
+
+function getBasePos(player) {
+  var bm = BOARD_SIZE - 1;
+  return player === "red" ? { x: 0, y: 0 } : { x: bm, y: bm };
+}
+
+function getEnemyBasePos(player) {
+  return getBasePos(otherPlayer(player));
 }
 
 function getPlayerData(p) {
-  if (p === "red") return gameState.red;
-  return gameState.blue;
+  return gameState[p];
 }
 
 function otherPlayer(p) {
   return p === "red" ? "blue" : "red";
 }
 
+function playerLabel(p) {
+  return p === "red" ? "Piros" : "Kék";
+}
+
+function victoryStatusText(winner, fullMessage) {
+  var name = playerLabel(winner);
+  return fullMessage ? "Győzelem: " + name + " játékos nyert!" : "Győzelem: " + name;
+}
+
+function getUnitInfo(type) {
+  return UNIT_DATA[type] || { name: "?", symbol: "?", emoji: "•", hp: 2, damage: 0, moveRange: 1, costWood: 0, costGold: 0, canAttack: false };
+}
+
 function getAttackDamage(attacker) {
-  if (attacker.type === "soldier") return 3;
-  if (attacker.type === "scout") return 1;
-  return 0;
+  return getUnitInfo(attacker.type).damage;
+}
+
+function $cellAt(x, y) {
+  return $("#board .cell").eq(cellIndex(x, y));
+}
+
+function getUnitById(id) {
+  var i;
+  for (i = 0; i < gameState.units.length; i++) {
+    if (gameState.units[i].id === id) return gameState.units[i];
+  }
+  return null;
+}
+
+function getSelectedUnit() {
+  if (selectedUnitId === null) return null;
+  return getUnitById(selectedUnitId);
+}
+
+function getTurnSecFromConfig() {
+  var sec = parseInt($("#cfg-turnsec").val(), 10);
+  return isNaN(sec) || sec < 10 ? 60 : sec;
 }
 
 function getUnitAt(x, y) {
@@ -69,17 +280,13 @@ function getUnitAt(x, y) {
 }
 
 function isEnemyBaseCell(x, y, myPlayer) {
-  var bm = BOARD_SIZE - 1;
-  if (myPlayer === "red" && x === bm && y === bm) return true;
-  if (myPlayer === "blue" && x === 0 && y === 0) return true;
-  return false;
+  var b = getEnemyBasePos(myPlayer);
+  return x === b.x && y === b.y;
 }
 
 function isOwnBaseCell(x, y, myPlayer) {
-  var bm = BOARD_SIZE - 1;
-  if (myPlayer === "red" && x === 0 && y === 0) return true;
-  if (myPlayer === "blue" && x === bm && y === bm) return true;
-  return false;
+  var b = getBasePos(myPlayer);
+  return x === b.x && y === b.y;
 }
 
 function canWalkOnto(x, y, myPlayer) {
@@ -97,8 +304,7 @@ function manhattan(ax, ay, bx, by) {
 }
 
 function getMoveRange(unit) {
-  if (unit.type === "scout") return 2;
-  return 1;
+  return getUnitInfo(unit.type).moveRange;
 }
 
 // Mozgáshoz: üres/cél cellák, 4 irány, katona/bányász: 1, felderítő: 2
@@ -106,31 +312,20 @@ function getReachableCells(unit) {
   var res = [];
   var visited = {};
   var q = [{ x: unit.x, y: unit.y, d: 0 }];
-  var key = function (x, y) {
-    return x + "," + y;
-  };
-  visited[key(unit.x, unit.y)] = true;
-
-  var dirs = [
-    { dx: 1, dy: 0 },
-    { dx: -1, dy: 0 },
-    { dx: 0, dy: 1 },
-    { dx: 0, dy: -1 }
-  ];
-
+  visited[cellKey(unit.x, unit.y)] = true;
   var maxD = getMoveRange(unit);
 
   while (q.length > 0) {
     var cur = q.shift();
     var k;
-    for (k = 0; k < dirs.length; k++) {
-      var nx = cur.x + dirs[k].dx;
-      var ny = cur.y + dirs[k].dy;
-      if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
+    for (k = 0; k < CARDINAL_DIRS.length; k++) {
+      var nx = cur.x + CARDINAL_DIRS[k].dx;
+      var ny = cur.y + CARDINAL_DIRS[k].dy;
+      if (!inBounds(nx, ny)) continue;
       var nd = cur.d + 1;
       if (nd > maxD) continue;
       if (!canWalkOnto(nx, ny, unit.player)) continue;
-      var kk = key(nx, ny);
+      var kk = cellKey(nx, ny);
       if (visited[kk]) continue;
       visited[kk] = true;
       res.push({ x: nx, y: ny });
@@ -185,8 +380,7 @@ function stopTurnTimer() {
 
 function startTurnTimer() {
   stopTurnTimer();
-  var sec = parseInt($("#cfg-turnsec").val(), 10);
-  if (isNaN(sec) || sec < 10) sec = 60;
+  var sec = getTurnSecFromConfig();
   gameState.turnSeconds = sec;
   gameState.turnTimeLeft = sec;
   $("#timer-val").html(String(gameState.turnTimeLeft));
@@ -252,39 +446,24 @@ function endTurn() {
   for (i = 0; i < gameState.units.length; i++) {
     gameState.units[i].acted = false;
   }
-  $("#status-line").html("Most lép: " + (gameState.currentPlayer === "red" ? "Piros" : "Kék"));
+  $("#status-line").html("Most lép: " + playerLabel(gameState.currentPlayer));
   updatePanels();
   renderBoard();
   var w = checkVictory();
   if (w !== null) {
-    $("#status-line").html("Győzelem: " + (w === "red" ? "Piros" : "Kék") + " játékos nyert!");
+    $("#status-line").html(victoryStatusText(w, true));
     return;
   }
   startTurnTimer();
 }
 
 function pulseUnitCell(x, y) {
-  var idx = y * BOARD_SIZE + x;
-  var $cell = $("#board .cell").eq(idx);
+  var $cell = $cellAt(x, y);
   var $stack = $cell.find(".unit-stack");
   if ($stack.length === 0) return;
   $stack.stop(true, true);
   // opacity: nem tolja el a szöveget / igazítást, ellentétben a fontSize-mal
   $stack.animate({ opacity: 0.55 }, 70).animate({ opacity: 1 }, 70);
-}
-
-function unitHungarianName(type) {
-  if (type === "miner") return "Bányász";
-  if (type === "soldier") return "Katona";
-  if (type === "scout") return "Felderítő";
-  return "?";
-}
-
-function unitEmoji(type) {
-  if (type === "miner") return "⛏";
-  if (type === "soldier") return "⚔";
-  if (type === "scout") return "👁";
-  return "•";
 }
 
 function isMoveValid(unit, tx, ty) {
@@ -322,10 +501,8 @@ function animateUnitMove(unit, tx, ty, onDone) {
 
   var ox = unit.x;
   var oy = unit.y;
-  var fromIdx = oy * BOARD_SIZE + ox;
-  var toIdx = ty * BOARD_SIZE + tx;
-  var $fromCell = $("#board .cell").eq(fromIdx);
-  var $toCell = $("#board .cell").eq(toIdx);
+  var $fromCell = $cellAt(ox, oy);
+  var $toCell = $cellAt(tx, ty);
   var $stack = $fromCell.find(".unit-stack");
 
   if ($stack.length === 0) {
@@ -380,13 +557,13 @@ function animateUnitMove(unit, tx, ty, onDone) {
 }
 
 function tryAttackBase(attacker, tx, ty) {
-  if (attacker.type === "miner") return false;
+  if (!getUnitInfo(attacker.type).canAttack) return false;
   if (!isEnemyBaseCell(tx, ty, attacker.player)) return false;
   if (!isAdjacent(attacker.x, attacker.y, tx, ty)) return false;
   if (attacker.acted) return false;
 
   var dmg = getAttackDamage(attacker);
-  var enemy = attacker.player === "red" ? getPlayerData("blue") : getPlayerData("red");
+  var enemy = getPlayerData(otherPlayer(attacker.player));
   enemy.baseHp -= dmg;
   attacker.acted = true;
   playSound("attack");
@@ -396,7 +573,7 @@ function tryAttackBase(attacker, tx, ty) {
 }
 
 function tryAttackUnit(attacker, target) {
-  if (attacker.type === "miner") return false;
+  if (!getUnitInfo(attacker.type).canAttack) return false;
   if (target.player === attacker.player) return false;
   if (!isAdjacent(attacker.x, attacker.y, target.x, target.y)) return false;
   if (attacker.acted) return false;
@@ -420,9 +597,9 @@ function tryAttackUnit(attacker, target) {
 }
 
 function findSpawnCell(player) {
-  var bm = BOARD_SIZE - 1;
-  var bx = player === "red" ? 0 : bm;
-  var by = player === "red" ? 0 : bm;
+  var base = getBasePos(player);
+  var bx = base.x;
+  var by = base.y;
   var cand = [
     { x: bx + 1, y: by },
     { x: bx - 1, y: by },
@@ -437,7 +614,7 @@ function findSpawnCell(player) {
   for (i = 0; i < cand.length; i++) {
     var cx = cand[i].x;
     var cy = cand[i].y;
-    if (cx < 0 || cx >= BOARD_SIZE || cy < 0 || cy >= BOARD_SIZE) continue;
+    if (!inBounds(cx, cy)) continue;
     if (!canWalkOnto(cx, cy, player)) continue;
     if (!isOwnBaseCell(cx, cy, player) && isEnemyBaseCell(cx, cy, player)) continue;
     return { x: cx, y: cy };
@@ -446,16 +623,13 @@ function findSpawnCell(player) {
 }
 
 function makeUnit(type, player, x, y) {
-  var hp = 2;
-  if (type === "soldier") hp = 4;
-  if (type === "scout") hp = 2;
   return {
     id: nextUnitId++,
     type: type,
     player: player,
     x: x,
     y: y,
-    hp: hp,
+    hp: getUnitInfo(type).hp,
     acted: false
   };
 }
@@ -463,17 +637,8 @@ function makeUnit(type, player, x, y) {
 function buildUnit(type) {
   var p = gameState.currentPlayer;
   var pl = getPlayerData(p);
-  var costW = 2;
-  var costG = 1;
-  if (type === "soldier") {
-    costW = 2;
-    costG = 2;
-  }
-  if (type === "scout") {
-    costW = 1;
-    costG = 2;
-  }
-  if (pl.wood < costW || pl.gold < costG) {
+  var info = getUnitInfo(type);
+  if (pl.wood < info.costWood || pl.gold < info.costGold) {
     alert("Nincs elég nyersanyag.");
     return;
   }
@@ -482,8 +647,8 @@ function buildUnit(type) {
     alert("Nincs üres mező a bázis mellett.");
     return;
   }
-  pl.wood -= costW;
-  pl.gold -= costG;
+  pl.wood -= info.costWood;
+  pl.gold -= info.costGold;
   gameState.units.push(makeUnit(type, p, spot.x, spot.y));
   playSound("click");
   updatePanels();
@@ -509,17 +674,8 @@ function initGame() {
   terrain[0][0] = "base_red";
   terrain[BOARD_SIZE - 1][BOARD_SIZE - 1] = "base_blue";
 
-  var resList = [
-    [2, 0, "gold"],
-    [1, 1, "wood"],
-    [4, 1, "gold"],
-    [2, 2, "wood"],
-    [3, 2, "gold"],
-    [2, 3, "gold"],
-    [3, 3, "wood"],
-    [1, 4, "gold"],
-    [4, 4, "wood"]
-  ];
+  var chosenSeed = MAP_SEEDS[Math.floor(Math.random() * MAP_SEEDS.length)];
+  var resList = chosenSeed.resources;
   var ri;
   for (ri = 0; ri < resList.length; ri++) {
     var rx = resList[ri][0];
@@ -536,8 +692,9 @@ function initGame() {
     terrain: terrain,
     units: [],
     turnNumber: 0,
-    turnSeconds: parseInt($("#cfg-turnsec").val(), 10) || 60,
-    turnTimeLeft: parseInt($("#cfg-turnsec").val(), 10) || 60
+    turnSeconds: getTurnSecFromConfig(),
+    turnTimeLeft: getTurnSecFromConfig(),
+    mapSeedName: chosenSeed.name
   };
 
   gameState.units.push(makeUnit("miner", "red", 1, 0));
@@ -545,7 +702,7 @@ function initGame() {
   gameState.units.push(makeUnit("miner", "blue", 4, 5));
   gameState.units.push(makeUnit("soldier", "blue", 5, 4));
 
-  $("#status-line").html("Új játék — Piros kezd.");
+  $("#status-line").html("Új játék — Piros kezd. Pálya: " + chosenSeed.name);
   updatePanels();
   renderBoard();
   var w = checkVictory();
@@ -568,34 +725,11 @@ function updatePanels() {
 }
 
 function terrainClass(t) {
-  if (t === "base_red") return "base-red";
-  if (t === "base_blue") return "base-blue";
-  if (t === "wood") return "wood";
-  if (t === "gold") return "gold";
-  return "";
-}
-
-function unitSymbol(type) {
-  if (type === "miner") return "B";
-  if (type === "soldier") return "K";
-  if (type === "scout") return "F";
-  return "?";
+  return TERRAIN_CLASS[t] || "";
 }
 
 function terrainBlockHtml(t) {
-  if (t === "wood") {
-    return '<div class="terrain-block"><span class="terrain-ic">🌲</span><span class="terrain-lbl">Fa</span></div>';
-  }
-  if (t === "gold") {
-    return '<div class="terrain-block"><span class="terrain-ic">💰</span><span class="terrain-lbl">Arany</span></div>';
-  }
-  if (t === "base_red") {
-    return '<div class="terrain-block terrain-base-lbl"><span class="terrain-ic">🏠</span><span class="terrain-lbl">Piros bázis</span></div>';
-  }
-  if (t === "base_blue") {
-    return '<div class="terrain-block terrain-base-lbl"><span class="terrain-ic">🏠</span><span class="terrain-lbl">Kék bázis</span></div>';
-  }
-  return "";
+  return TERRAIN_BLOCKS[t] || "";
 }
 
 function renderBoard() {
@@ -614,18 +748,19 @@ function renderBoard() {
       $cell.append(terrainBlockHtml(t));
 
       if (u !== null) {
+        var uinfo = getUnitInfo(u.type);
         var side = u.player === "red" ? "unit-side-red" : "unit-side-blue";
         var line =
           '<div class="unit-stack ' +
           side +
           '">' +
           '<div class="unit-topline"><span class="unit-emoji">' +
-          unitEmoji(u.type) +
+          uinfo.emoji +
           '</span> <span class="unit-code">' +
-          unitSymbol(u.type) +
+          uinfo.symbol +
           '</span></div>' +
           '<div class="unit-name">' +
-          unitHungarianName(u.type) +
+          uinfo.name +
           "</div>" +
           '<div class="unit-hp">Élet: ' +
           u.hp +
@@ -638,46 +773,23 @@ function renderBoard() {
     }
   }
 
-  // kijelölés és hintek
-  if (selectedUnitId !== null) {
-    var su = null;
-    var i;
-    for (i = 0; i < gameState.units.length; i++) {
-      if (gameState.units[i].id === selectedUnitId) su = gameState.units[i];
-    }
-    if (su !== null) {
-      var idx = su.y * BOARD_SIZE + su.x;
-      $("#board .cell").eq(idx).addClass("selected");
-
-      if (su.player === gameState.currentPlayer && !su.acted) {
-        var cells = getReachableCells(su);
-        for (i = 0; i < cells.length; i++) {
-          var ii = cells[i].y * BOARD_SIZE + cells[i].x;
-          $("#board .cell").eq(ii).addClass("move-hint");
-        }
-        // támadás jelölés: szomszédos ellenség
-        var dirs = [
-          { dx: 1, dy: 0 },
-          { dx: -1, dy: 0 },
-          { dx: 0, dy: 1 },
-          { dx: 0, dy: -1 }
-        ];
-        if (su.type !== "miner") {
-          for (i = 0; i < dirs.length; i++) {
-            var ax = su.x + dirs[i].dx;
-            var ay = su.y + dirs[i].dy;
-            if (ax < 0 || ax >= BOARD_SIZE || ay < 0 || ay >= BOARD_SIZE) continue;
-            var en = getUnitAt(ax, ay);
-            if (en !== null && en.player !== su.player) {
-              $("#board .cell")
-                .eq(ay * BOARD_SIZE + ax)
-                .addClass("attack-hint");
-            }
-            if (isEnemyBaseCell(ax, ay, su.player)) {
-              $("#board .cell")
-                .eq(ay * BOARD_SIZE + ax)
-                .addClass("attack-hint");
-            }
+  var su = getSelectedUnit();
+  if (su !== null) {
+    $cellAt(su.x, su.y).addClass("selected");
+    if (su.player === gameState.currentPlayer && !su.acted) {
+      var cells = getReachableCells(su);
+      var i;
+      for (i = 0; i < cells.length; i++) {
+        $cellAt(cells[i].x, cells[i].y).addClass("move-hint");
+      }
+      if (getUnitInfo(su.type).canAttack) {
+        for (i = 0; i < CARDINAL_DIRS.length; i++) {
+          var ax = su.x + CARDINAL_DIRS[i].dx;
+          var ay = su.y + CARDINAL_DIRS[i].dy;
+          if (!inBounds(ax, ay)) continue;
+          var en = getUnitAt(ax, ay);
+          if ((en !== null && en.player !== su.player) || isEnemyBaseCell(ax, ay, su.player)) {
+            $cellAt(ax, ay).addClass("attack-hint");
           }
         }
       }
@@ -697,13 +809,7 @@ function onCellClick(x, y) {
   }
 
   var clickedUnit = getUnitAt(x, y);
-  var su = null;
-  if (selectedUnitId !== null) {
-    var i;
-    for (i = 0; i < gameState.units.length; i++) {
-      if (gameState.units[i].id === selectedUnitId) su = gameState.units[i];
-    }
-  }
+  var su = getSelectedUnit();
 
   // egység kiválasztás
   if (clickedUnit !== null && clickedUnit.player === gameState.currentPlayer) {
@@ -721,7 +827,7 @@ function onCellClick(x, y) {
       w = checkVictory();
       if (w !== null) {
         stopTurnTimer();
-        $("#status-line").html("Győzelem: " + (w === "red" ? "Piros" : "Kék"));
+        $("#status-line").html(victoryStatusText(w, false));
         return;
       }
     }
@@ -736,7 +842,7 @@ function onCellClick(x, y) {
       w = checkVictory();
       if (w !== null) {
         stopTurnTimer();
-        $("#status-line").html("Győzelem: " + (w === "red" ? "Piros" : "Kék"));
+        $("#status-line").html(victoryStatusText(w, false));
         return;
       }
       return;
@@ -753,7 +859,7 @@ function onCellClick(x, y) {
       var ww = checkVictory();
       if (ww !== null) {
         stopTurnTimer();
-        $("#status-line").html("Győzelem: " + (ww === "red" ? "Piros" : "Kék"));
+        $("#status-line").html(victoryStatusText(ww, false));
       }
     });
   }
@@ -800,7 +906,7 @@ function loadGame() {
     stopTurnTimer();
     updatePanels();
     renderBoard();
-    $("#status-line").html("Betöltve. Most lép: " + (gameState.currentPlayer === "red" ? "Piros" : "Kék"));
+    $("#status-line").html("Betöltve. Most lép: " + playerLabel(gameState.currentPlayer));
     var w = checkVictory();
     if (w === null) startTurnTimer();
     else $("#status-line").html("Ez a mentés már befejezett játékot tartalmaz.");
@@ -819,6 +925,56 @@ function toggleTheme() {
   }
 }
 
+function showStartScreen() {
+  stopTurnTimer();
+  gameSessionActive = false;
+  startScreenDismissed = false;
+  $("body").addClass("at-menu");
+  var $screen = $("#start-screen");
+  $screen.removeClass("start-screen--hidden").css("display", "flex").hide().fadeIn(160);
+}
+
+function dismissStartScreen(callback) {
+  if (startScreenDismissed) {
+    if (callback) callback();
+    return;
+  }
+  startScreenDismissed = true;
+  $("body").removeClass("at-menu");
+  var $screen = $("#start-screen");
+  $screen.addClass("start-screen--hidden");
+  setTimeout(function () {
+    $screen.css("display", "none");
+    gameSessionActive = true;
+    if (callback) callback();
+  }, 280);
+}
+
+function beginNewGameFromMenu() {
+  if (startScreenDismissed) {
+    initGame();
+    return;
+  }
+  dismissStartScreen(function () {
+    initGame();
+  });
+}
+
+function beginLoadFromMenu() {
+  var raw = localStorage.getItem("islandorsSave");
+  if (raw === null || raw === "") {
+    alert("Nincs mentés.");
+    return;
+  }
+  if (startScreenDismissed) {
+    loadGame();
+    return;
+  }
+  dismissStartScreen(function () {
+    loadGame();
+  });
+}
+
 $(function () {
   $("body").addClass("theme-light");
 
@@ -826,6 +982,16 @@ $(function () {
     var x = parseInt($(this).data("x"), 10);
     var y = parseInt($(this).data("y"), 10);
     onCellClick(x, y);
+  });
+
+  $("#btn-start-game").click(function () {
+    playSound("click");
+    beginNewGameFromMenu();
+  });
+
+  $("#btn-load-menu").click(function () {
+    playSound("click");
+    beginLoadFromMenu();
   });
 
   $("#btn-new").click(function () {
@@ -868,6 +1034,10 @@ $(function () {
     playSound("click");
   });
 
+  $("#btn-exit-menu").click(function () {
+    showStartScreen();
+  });
+
   $("#btn-endturn").click(function () {
     playSound("click");
     endTurn();
@@ -885,7 +1055,7 @@ $(function () {
 
   // billentyű: Enter = kör vége
   $(document).keydown(function (e) {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && gameSessionActive) {
       endTurn();
     }
   });
@@ -895,5 +1065,4 @@ $(function () {
     $("#timer-line").css("opacity", "1");
   });
 
-  initGame();
 });
