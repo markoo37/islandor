@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Islandors</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- jQuery és jQuery UI (órai minta) -->
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/ui-lightness/jquery-ui.css">
   <link rel="stylesheet" href="style.css">
@@ -12,32 +15,47 @@
 </head>
 <body class="theme-light">
   <div id="wrap">
-    <h1 id="main-title">Islandors</h1>
+    <header class="game-header">
+      <h1 id="main-title">Islandors</h1>
+      <p class="game-tagline">Tropikus stratégia a szigeten</p>
+    </header>
 
     <div id="layout">
       <main id="center">
         <div class="controls" id="controls">
-          <div class="control-row">
-            <span class="row-label">Játék</span>
-            <div class="btn-cluster">
-              <button type="button" id="btn-new" class="btn-ctrl">Új játék</button>
-              <button type="button" id="btn-save" class="btn-ctrl">Mentés</button>
-              <button type="button" id="btn-load" class="btn-ctrl">Betöltés</button>
-              <button type="button" id="btn-help" class="btn-ctrl">Súgó</button>
+          <div class="hud-top">
+            <div class="hud-section hud-section-game">
+              <span class="hud-section-label">Játék</span>
+              <div class="btn-cluster hud-game-cluster">
+                <button type="button" id="btn-new" class="btn-ctrl">Új játék</button>
+                <button type="button" id="btn-save" class="btn-ctrl">Mentés</button>
+                <button type="button" id="btn-load" class="btn-ctrl">Betöltés</button>
+              </div>
             </div>
-          </div>
-          <div class="control-row">
-            <span class="row-label">Kör</span>
-            <div class="btn-cluster btn-cluster-grow">
-              <button type="button" id="btn-theme" class="btn-ctrl">Téma váltás</button>
-              <button type="button" id="btn-endturn" class="btn-ctrl btn-primary">Kör vége</button>
-              <label class="inline-label">Köridő (mp):
-                <select id="cfg-turnsec" class="select-turn">
-                  <option value="30">30</option>
-                  <option value="60" selected>60</option>
-                  <option value="90">90</option>
-                </select>
-              </label>
+            <div class="hud-section hud-section-turn">
+              <span class="hud-section-label">Kör</span>
+              <div class="hud-turn-cluster">
+                <p id="status-line" class="status-line-inner">Állapot</p>
+                <div class="hud-turn-row">
+                  <p id="timer-line" class="timer-line-inner">Köridő: <span id="timer-val">60</span> mp</p>
+                  <button type="button" id="btn-endturn" class="btn-ctrl btn-primary btn-endturn-prominent">Kör vége</button>
+                </div>
+                <label class="inline-label inline-label-turn">Köridő (mp):
+                  <select id="cfg-turnsec" class="select-turn">
+                    <option value="30">30</option>
+                    <option value="60" selected>60</option>
+                    <option value="90">90</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <div class="hud-section hud-section-utils">
+              <span class="hud-section-label">Egyéb</span>
+              <div class="btn-cluster hud-utils-cluster">
+                <button type="button" id="btn-theme" class="btn-ctrl">Téma váltás</button>
+                <button type="button" id="btn-help" class="btn-ctrl">Súgó</button>
+                <button type="button" id="btn-rules" class="btn-ctrl">Játékmenet</button>
+              </div>
             </div>
           </div>
           <div class="control-row control-row-build">
@@ -58,15 +76,13 @@
             </div>
           </div>
         </div>
-        <p id="status-line">Állapot</p>
-        <p id="timer-line">Köridő: <span id="timer-val">60</span> mp</p>
 
         <div class="board-row">
           <aside id="panel-left" class="info-panel info-panel-red">
             <h2>Piros játékos</h2>
-            <p>Fa: <span id="res-red-wood">0</span></p>
-            <p>Arany: <span id="res-red-gold">0</span></p>
-            <p>Bázis élet: <span id="hp-red-base">0</span></p>
+            <p class="res-line"><span class="res-ic" aria-hidden="true">🌲</span> <span class="res-lbl">Fa</span> <span id="res-red-wood" class="res-val">0</span></p>
+            <p class="res-line"><span class="res-ic" aria-hidden="true">💰</span> <span class="res-lbl">Arany</span> <span id="res-red-gold" class="res-val">0</span></p>
+            <p class="res-line"><span class="res-ic" aria-hidden="true">❤️</span> <span class="res-lbl">Bázis</span> <span id="hp-red-base" class="res-val">0</span></p>
             <p class="turn-mark" id="turn-red">—</p>
           </aside>
 
@@ -76,20 +92,135 @@
 
           <aside id="panel-right" class="info-panel info-panel-blue">
             <h2>Kék játékos</h2>
-            <p>Fa: <span id="res-blue-wood">0</span></p>
-            <p>Arany: <span id="res-blue-gold">0</span></p>
-            <p>Bázis élet: <span id="hp-blue-base">0</span></p>
+            <p class="res-line"><span class="res-ic" aria-hidden="true">🌲</span> <span class="res-lbl">Fa</span> <span id="res-blue-wood" class="res-val">0</span></p>
+            <p class="res-line"><span class="res-ic" aria-hidden="true">💰</span> <span class="res-lbl">Arany</span> <span id="res-blue-gold" class="res-val">0</span></p>
+            <p class="res-line"><span class="res-ic" aria-hidden="true">❤️</span> <span class="res-lbl">Bázis</span> <span id="hp-blue-base" class="res-val">0</span></p>
             <p class="turn-mark" id="turn-blue">—</p>
           </aside>
         </div>
       </main>
     </div>
 
-    <div id="help-box" title="Súgó — Islandors" style="display:none;">
-      <p><strong>Cél:</strong> Pusztítsd el az ellenfél bázisát, vagy szerezz győzelmet, ha az ellenfélnek nincs egysége.</p>
-      <p><strong>Kör:</strong> Mindig egy játékos lép. Válassz egységet kattintással, majd kattints egy üres mezőre a mozgáshoz. Katonával az ellenséges egységre kattintva támadás.</p>
-      <p><strong>Bányász:</strong> Ha erdőre vagy aranymezőre lép, <strong>+3</strong> fa vagy arany (a mező kiürül). <strong>Katona:</strong> harc. <strong>Felderítő:</strong> messzebb mozog. A lépés animációval jelenik meg.</p>
-      <p><strong>Gombok:</strong> Gyártás a bázis melletti üres mezőre kerül. A köridő lejártakor automatikusan kör vége. <strong>Enter:</strong> kör vége.</p>
+    <div id="help-box" title="Gyors súgó" style="display:none;" class="rules-dialog-content rules-modal help-modal">
+      <p class="rules-modal__lede">Gyors tájékoztató. A teljes szabályokért nyisd meg a <strong>Játékmenet</strong> gombot.</p>
+
+      <div class="rules-modal__grid">
+        <div class="rules-modal__col">
+          <section class="rules-card">
+            <h3 class="rules-card__title">Gyors vezérlés</h3>
+            <ul class="rules-list help-modal__list">
+              <li>Kattints saját egységre = kijelölés</li>
+              <li>Kattints zöld mezőre = mozgás</li>
+              <li>Kattints piros jelölésre = támadás</li>
+              <li>Enter = kör vége</li>
+            </ul>
+          </section>
+          <section class="rules-card">
+            <h3 class="rules-card__title">Hasznos tippek</h3>
+            <ul class="rules-list help-modal__list">
+              <li>Először gyűjts nyersanyagot bányásszal.</li>
+              <li>A középső mezők fontosabbak.</li>
+              <li>A katona erős, de lassabb.</li>
+              <li>A felderítő gyorsabban ér el célpontokat.</li>
+            </ul>
+          </section>
+          <section class="rules-card">
+            <h3 class="rules-card__title">Gombok</h3>
+            <ul class="rules-list help-modal__list help-modal__list--btns">
+              <li>Új játék</li>
+              <li>Mentés</li>
+              <li>Betöltés</li>
+              <li>Téma váltás</li>
+              <li>Kör vége</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div id="rules-box" title="Játékmenet és szabályok" style="display:none;" class="rules-dialog-content rules-modal">
+      <p class="rules-modal__lede">Körökre osztott sziget-stratégia: egy játékos lép, egységekkel harcolsz és gyűjtesz, majd átadod a kört.</p>
+
+      <div class="rules-modal__grid">
+        <div class="rules-modal__col">
+          <section class="rules-card">
+            <h3 class="rules-card__title">Cél</h3>
+            <p class="rules-card__text">Semmisítsd az ellenfél bázisát, vagy maradj utolsóként egységgel a táblán.</p>
+          </section>
+          <section class="rules-card">
+            <h3 class="rules-card__title">Körök</h3>
+            <ul class="rules-list">
+              <li>Mindig egy játékos lép.</li>
+              <li>Akciók után: Kör vége vagy Enter → átadás.</li>
+              <li>A köridő lejáratakor a kör automatikusan zárul.</li>
+            </ul>
+          </section>
+          <section class="rules-card">
+            <h3 class="rules-card__title">Mozgás</h3>
+            <ul class="rules-list">
+              <li>Saját egységre kattintás: kijelölés.</li>
+              <li>Zöld mező: mozgás · piros jel: támadás (ha érvényes).</li>
+              <li>Egységenként egy fő akció körönként (mozgás vagy támadás).</li>
+            </ul>
+          </section>
+          <section class="rules-card">
+            <h3 class="rules-card__title">Nyersanyag és gyártás</h3>
+            <ul class="rules-list">
+              <li>Fa és arany a paneleken. Bányász erdőre vagy arany mezőre lépve +3-at gyűjt; a mező kiürül.</li>
+              <li>Gyártás: van nyersanyag és üres cella a bázis mellett → új egység (költség a gombokon).</li>
+            </ul>
+          </section>
+        </div>
+
+        <div class="rules-modal__col">
+          <section class="rules-card rules-card--units">
+            <h3 class="rules-card__title">Egységtípusok</h3>
+            <div class="rules-units">
+              <div class="rules-unit">
+                <div class="rules-unit__head"><span class="rules-unit__ic" aria-hidden="true">⛏</span> Bányász</div>
+                <ul class="rules-list rules-list--tight">
+                  <li>gyűjtés</li>
+                  <li>1 mező mozgás</li>
+                  <li>nem támad</li>
+                </ul>
+              </div>
+              <div class="rules-unit">
+                <div class="rules-unit__head"><span class="rules-unit__ic" aria-hidden="true">⚔</span> Katona</div>
+                <ul class="rules-list rules-list--tight">
+                  <li>2 sebzés támadáskor</li>
+                  <li>1 mező mozgás</li>
+                  <li>közelharc</li>
+                </ul>
+              </div>
+              <div class="rules-unit">
+                <div class="rules-unit__head"><span class="rules-unit__ic" aria-hidden="true">👁</span> Felderítő</div>
+                <ul class="rules-list rules-list--tight">
+                  <li>2 mező mozgás (egy irányban)</li>
+                  <li>1 sebzés támadáskor</li>
+                  <li>gyors, messzebb ér</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+          <section class="rules-card">
+            <h3 class="rules-card__title">Támadás</h3>
+            <p class="rules-card__text">Katona és felderítő: szomszédos ellenséges egység vagy ellenséges bázis cella. A bányász nem támad. 0 HP-nál az egység eltűnik.</p>
+          </section>
+          <section class="rules-card">
+            <h3 class="rules-card__title">Győzelem</h3>
+            <p class="rules-card__text">Ellenséges bázis 0 élet, vagy nincs több ellenséges egység a táblán.</p>
+          </section>
+        </div>
+      </div>
+
+      <footer class="rules-modal__footer">
+        <h4 class="rules-footer__title">Vezérlés</h4>
+        <ul class="rules-list rules-list--footer">
+          <li>Kattintás = kijelölés / célmező</li>
+          <li>Enter = kör vége</li>
+          <li>Mentés / Betöltés használható játék közben</li>
+        </ul>
+      </footer>
     </div>
 
     <footer id="footer-creator">
