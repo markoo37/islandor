@@ -925,8 +925,31 @@ function toggleTheme() {
   }
 }
 
+function getBgMusic() {
+  return document.getElementById("bg-music");
+}
+
+function startBgMusic() {
+  var music = getBgMusic();
+  if (!music) return;
+  music.volume = 0.35;
+  if (music.paused) {
+    music.play().catch(function () {
+      console.log("Autoplay blocked.");
+    });
+  }
+}
+
+function stopBgMusic() {
+  var music = getBgMusic();
+  if (!music) return;
+  music.pause();
+  music.currentTime = 0;
+}
+
 function showStartScreen() {
   stopTurnTimer();
+  stopBgMusic();
   gameSessionActive = false;
   startScreenDismissed = false;
   $("body").addClass("at-menu");
@@ -986,6 +1009,7 @@ $(function () {
 
   $("#btn-start-game").click(function () {
     playSound("click");
+    startBgMusic();
     beginNewGameFromMenu();
   });
 
@@ -1036,6 +1060,13 @@ $(function () {
 
   $("#btn-exit-menu").click(function () {
     showStartScreen();
+  });
+
+  $("#btn-mute").click(function () {
+    var music = getBgMusic();
+    if (!music) return;
+    music.muted = !music.muted;
+    $(this).text(music.muted ? "🔇 Némítva" : "🔊 Hang");
   });
 
   $("#btn-endturn").click(function () {
