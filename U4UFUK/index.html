@@ -13,7 +13,7 @@
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 </head>
-<body class="theme-light at-menu">
+<body class="theme-dark at-menu">
   <div id="start-screen" class="start-screen" role="dialog" aria-label="Főmenü">
     <div class="start-screen__bg" aria-hidden="true"></div>
     <div class="start-panel">
@@ -29,30 +29,35 @@
 
   <div id="wrap" class="game-shell">
     <header class="game-header">
+      <div class="top-icon-actions" aria-label="Gyors gombok">
+        <button type="button" id="btn-theme" class="icon-btn" title="Téma váltás" aria-label="Téma váltás">🎨</button>
+        <button type="button" id="btn-mute" class="icon-btn" title="Hang" aria-label="Hang">🔊</button>
+        <button type="button" id="btn-help" class="icon-btn" title="Súgó" aria-label="Súgó">?</button>
+        <button type="button" id="btn-rules" class="icon-btn" title="Játékmenet" aria-label="Játékmenet">📖</button>
+      </div>
       <h1 id="main-title">Islandors</h1>
       <p class="game-tagline">Stratégia a szigeten</p>
     </header>
 
     <div id="layout">
-      <main id="center">
-        <div class="controls" id="controls">
-          <div class="hud-top">
-            <div class="hud-section hud-section-game">
+      <div class="game-layout">
+        <aside class="game-sidebar">
+          <div class="controls" id="controls">
+            <section class="sidebar-card hud-section hud-section-game">
               <span class="hud-section-label">Játék</span>
-              <div class="btn-cluster hud-game-cluster">
+              <div class="btn-cluster hud-game-cluster sidebar-btn-grid">
                 <button type="button" id="btn-new" class="btn-ctrl">Új játék</button>
                 <button type="button" id="btn-save" class="btn-ctrl">Mentés</button>
-                <button type="button" id="btn-load" class="btn-ctrl">Betöltés</button>
+                <button type="button" id="btn-load" class="btn-ctrl">Legutóbbi mentés betöltése</button>
               </div>
-            </div>
-            <div class="hud-section hud-section-turn">
+            </section>
+
+            <section class="sidebar-card hud-section hud-section-turn">
               <span class="hud-section-label">Kör</span>
               <div class="hud-turn-cluster">
                 <p id="status-line" class="status-line-inner">Állapot</p>
-                <div class="hud-turn-row">
-                  <p id="timer-line" class="timer-line-inner">Köridő: <span id="timer-val">60</span> mp</p>
-                  <button type="button" id="btn-endturn" class="btn-ctrl btn-primary btn-endturn-prominent">Kör vége</button>
-                </div>
+                <p id="timer-line" class="timer-line-inner">Köridő: <span id="timer-val">60</span> mp</p>
+                <button type="button" id="btn-endturn" class="btn-ctrl btn-primary btn-endturn-prominent">Kör vége</button>
                 <label class="inline-label inline-label-turn">Köridő (mp):
                   <select id="cfg-turnsec" class="select-turn">
                     <option value="30">30</option>
@@ -61,59 +66,61 @@
                   </select>
                 </label>
               </div>
-            </div>
-            <div class="hud-section hud-section-utils">
-              <span class="hud-section-label">Egyéb</span>
-              <div class="btn-cluster hud-utils-cluster">
-                <button type="button" id="btn-theme" class="btn-ctrl">Téma váltás</button>
-                <button type="button" id="btn-mute" class="btn-ctrl">🔊 Hang</button>
-                <button type="button" id="btn-help" class="btn-ctrl">Súgó</button>
-                <button type="button" id="btn-rules" class="btn-ctrl">Játékmenet</button>
-                <button type="button" id="btn-exit-menu" class="btn-ctrl">Kilépés</button>
+            </section>
+
+            <section class="sidebar-card control-row control-row-build">
+              <span class="hud-section-label">Gyártás</span>
+              <div class="btn-cluster btn-cluster-build sidebar-build-stack">
+                <button type="button" id="btn-build-miner" class="btn-build" title="Bányász: gyűjtés, 1 mező lépés">
+                  <span class="btn-build-title">Bányász</span>
+                  <span class="btn-build-cost">2 fa · 1 arany</span>
+                </button>
+                <button type="button" id="btn-build-soldier" class="btn-build" title="Katona: harc, 2 sebzés">
+                  <span class="btn-build-title">Katona</span>
+                  <span class="btn-build-cost">2 fa · 2 arany</span>
+                </button>
+                <button type="button" id="btn-build-scout" class="btn-build" title="Felderítő: 2 mező lépés, 1 sebzés">
+                  <span class="btn-build-title">Felderítő</span>
+                  <span class="btn-build-cost">1 fa · 2 arany</span>
+                </button>
               </div>
+            </section>
+
+            <section class="sidebar-card sidebar-players">
+              <span class="hud-section-label">Játékosok</span>
+              <aside id="panel-left" class="info-panel info-panel-red">
+                <h2>Piros játékos</h2>
+                <p class="res-line"><span class="res-ic" aria-hidden="true">🌲</span> <span class="res-lbl">Fa</span> <span id="res-red-wood" class="res-val">0</span></p>
+                <p class="res-line"><span class="res-ic" aria-hidden="true">💰</span> <span class="res-lbl">Arany</span> <span id="res-red-gold" class="res-val">0</span></p>
+                <p class="res-line"><span class="res-ic" aria-hidden="true">❤️</span> <span class="res-lbl">Bázis</span> <span id="hp-red-base" class="res-val">0</span></p>
+                <p class="turn-mark" id="turn-red">—</p>
+              </aside>
+              <aside id="panel-right" class="info-panel info-panel-blue">
+                <h2>Kék játékos</h2>
+                <p class="res-line"><span class="res-ic" aria-hidden="true">🌲</span> <span class="res-lbl">Fa</span> <span id="res-blue-wood" class="res-val">0</span></p>
+                <p class="res-line"><span class="res-ic" aria-hidden="true">💰</span> <span class="res-lbl">Arany</span> <span id="res-blue-gold" class="res-val">0</span></p>
+                <p class="res-line"><span class="res-ic" aria-hidden="true">❤️</span> <span class="res-lbl">Bázis</span> <span id="hp-blue-base" class="res-val">0</span></p>
+                <p class="turn-mark" id="turn-blue">—</p>
+              </aside>
+            </section>
+
+            <section class="sidebar-card sidebar-exit">
+              <button type="button" id="btn-exit-menu" class="btn-ctrl btn-exit-sidebar">Kilépés</button>
+            </section>
+          </div>
+        </aside>
+
+        <section class="game-main">
+          <main id="center">
+            <div id="board-wrap">
+              <div id="board"></div>
             </div>
-          </div>
-          <div class="control-row control-row-build">
-            <span class="row-label">Gyártás</span>
-            <div class="btn-cluster btn-cluster-build">
-              <button type="button" id="btn-build-miner" class="btn-build" title="Bányász: gyűjtés, 1 mező lépés">
-                <span class="btn-build-title">Bányász</span>
-                <span class="btn-build-cost">2 fa · 1 arany</span>
-              </button>
-              <button type="button" id="btn-build-soldier" class="btn-build" title="Katona: harc, 2 sebzés">
-                <span class="btn-build-title">Katona</span>
-                <span class="btn-build-cost">2 fa · 2 arany</span>
-              </button>
-              <button type="button" id="btn-build-scout" class="btn-build" title="Felderítő: 2 mező lépés, 1 sebzés">
-                <span class="btn-build-title">Felderítő</span>
-                <span class="btn-build-cost">1 fa · 2 arany</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="board-row">
-          <aside id="panel-left" class="info-panel info-panel-red">
-            <h2>Piros játékos</h2>
-            <p class="res-line"><span class="res-ic" aria-hidden="true">🌲</span> <span class="res-lbl">Fa</span> <span id="res-red-wood" class="res-val">0</span></p>
-            <p class="res-line"><span class="res-ic" aria-hidden="true">💰</span> <span class="res-lbl">Arany</span> <span id="res-red-gold" class="res-val">0</span></p>
-            <p class="res-line"><span class="res-ic" aria-hidden="true">❤️</span> <span class="res-lbl">Bázis</span> <span id="hp-red-base" class="res-val">0</span></p>
-            <p class="turn-mark" id="turn-red">—</p>
-          </aside>
-
-          <div id="board-wrap">
-            <div id="board"></div>
-          </div>
-
-          <aside id="panel-right" class="info-panel info-panel-blue">
-            <h2>Kék játékos</h2>
-            <p class="res-line"><span class="res-ic" aria-hidden="true">🌲</span> <span class="res-lbl">Fa</span> <span id="res-blue-wood" class="res-val">0</span></p>
-            <p class="res-line"><span class="res-ic" aria-hidden="true">💰</span> <span class="res-lbl">Arany</span> <span id="res-blue-gold" class="res-val">0</span></p>
-            <p class="res-line"><span class="res-ic" aria-hidden="true">❤️</span> <span class="res-lbl">Bázis</span> <span id="hp-blue-base" class="res-val">0</span></p>
-            <p class="turn-mark" id="turn-blue">—</p>
-          </aside>
-        </div>
-      </main>
+            <footer id="footer-creator">
+              Készítette: Spitz Márk - <span id="neptun-placeholder">U4UFUK</span>
+            </footer>
+          </main>
+        </section>
+      </div>
     </div>
 
     <div id="help-box" title="Gyors súgó" style="display:none;" class="rules-dialog-content rules-modal help-modal">
@@ -237,11 +244,27 @@
         </ul>
       </footer>
     </div>
-
-    <footer id="footer-creator">
-      Készítette: Spitz Márk -<span id="neptun-placeholder">U4UFUK</span>
-    </footer>
   </div>
+
+  <audio id="sfx-move" preload="auto">
+    <source src="assets/sounds/move_sound.wav" type="audio/wav">
+  </audio>
+
+  <audio id="sfx-spawn" preload="auto">
+    <source src="assets/sounds/spawn_sound.wav" type="audio/wav">
+  </audio>
+
+  <audio id="sfx-pickup" preload="auto">
+    <source src="assets/sounds/miner_pickup.wav" type="audio/wav">
+  </audio>
+
+  <audio id="sfx-sword" preload="auto">
+    <source src="assets/sounds/sword_hit.wav" type="audio/wav">
+  </audio>
+
+  <audio id="sfx-magic" preload="auto">
+    <source src="assets/sounds/magic_sound.wav" type="audio/wav">
+  </audio>
 
   <audio id="bg-music" loop preload="auto">
     <source src="assets/music/gamemusic.mp3" type="audio/mpeg">

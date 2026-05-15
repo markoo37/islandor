@@ -1,5 +1,6 @@
-// Islandors — egyszerű jQuery játék, kezdő szint
+// islandors - egyszeru jquery jatek
 
+// fobb jatek valtozok
 var BOARD_SIZE = 6;
 var gameState = {};
 var nextUnitId = 1;
@@ -8,13 +9,14 @@ var turnTimerHandle = null;
 var moveAnimationActive = false;
 var gameSessionActive = false;
 var startScreenDismissed = false;
+var gameEndAnnounced = false;
 
-// gyűjtéskor ennyit ad egy mező (kevesebb mező mellett is lehet haladni)
+// gyujteskor ennyit ad egy mezo
 var GATHER_AMOUNT = 3;
-// átlépés animáció hossza (ms)
+// atlepes animacio hossza ms-ben
 var MOVE_ANIM_MS = 175;
 
-// Előre definiált, kiegyenlített pályák (6×6, tükrözött elrendezés)
+// elore definialt palyak (6x6)
 var MAP_SEEDS = [
   {
     name: "Klasszikus pálya",
@@ -147,12 +149,14 @@ var MAP_SEEDS = [
   }
 ];
 
+// egyseg tipusok es statok
 var UNIT_DATA = {
   miner: { name: "Bányász", symbol: "B", emoji: "⛏", hp: 2, damage: 0, moveRange: 1, costWood: 2, costGold: 1, canAttack: false },
   soldier: { name: "Katona", symbol: "K", emoji: "⚔", hp: 4, damage: 3, moveRange: 1, costWood: 2, costGold: 2, canAttack: true },
   scout: { name: "Felderítő", symbol: "F", emoji: "👁", hp: 2, damage: 1, moveRange: 2, costWood: 1, costGold: 2, canAttack: true }
 };
 
+// negy irany: fel, le, jobbra, balra
 var CARDINAL_DIRS = [
   { dx: 1, dy: 0 },
   { dx: -1, dy: 0 },
@@ -160,6 +164,7 @@ var CARDINAL_DIRS = [
   { dx: 0, dy: -1 }
 ];
 
+// terep tipusok css osztalyai
 var TERRAIN_CLASS = {
   base_red: "base-red",
   base_blue: "base-blue",
@@ -167,6 +172,7 @@ var TERRAIN_CLASS = {
   gold: "gold"
 };
 
+// terep megjelenitese a cellaban
 var TERRAIN_BLOCKS = {
   wood: '<div class="terrain-block"><span class="terrain-ic">🌲</span><span class="terrain-lbl">Fa</span></div>',
   gold: '<div class="terrain-block"><span class="terrain-ic">💰</span><span class="terrain-lbl">Arany</span></div>',
@@ -174,33 +180,46 @@ var TERRAIN_BLOCKS = {
   base_blue: '<div class="terrain-block terrain-base-lbl"><span class="terrain-ic">🏠</span><span class="terrain-lbl">Kék bázis</span></div>'
 };
 
-// --- Hang: egyszerű sípolás (AudioContext) ---
+// hangeffektek lejatszasa
 function playSound(kind) {
-  try {
-    var Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!Ctx) return;
-    var ctx = new Ctx();
-    var osc = ctx.createOscillator();
-    var gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    if (kind === "attack") {
-      osc.frequency.value = 220;
-      gain.gain.value = 0.08;
-    } else {
-      osc.frequency.value = 440;
-      gain.gain.value = 0.06;
-    }
-    osc.start();
-    setTimeout(function () {
-      osc.stop();
-      ctx.close();
-    }, 120);
-  } catch (e) {
-    // ha nincs hang, csendben marad
-  }
+  var ids = {
+    move: "sfx-move",
+    spawn: "sfx-spawn",
+    pickup: "sfx-pickup",
+    sword: "sfx-sword",
+    magic: "sfx-magic"
+  };
+
+  var id = ids[kind];
+  if (!id) return;
+
+  var audio = document.getElementById(id);
+  if (!audio) return;
+
+  audio.currentTime = 0;
+
+  var volume = 0.4;
+
+  if (kind === "move") volume = 0.25;
+  if (kind === "pickup") volume = 0.4;
+  if (kind === "spawn") volume = 0.45;
+  if (kind === "sword") volume = 0.55;
+  if (kind === "magic") volume = 0.5;
+
+  audio.volume = volume;
+
+  audio.play().catch(function () {
+    // bongeszo blokkolhatja elso kattintasig
+  });
 }
 
+// tamadas hangja egyseg tipus szerint
+function playAttackSound(attacker) {
+  if (attacker.type === "soldier") playSound("sword");
+  else if (attacker.type === "scout") playSound("magic");
+}
+
+// seged: cella index es kulcs
 function cellIndex(x, y) {
   return y * BOARD_SIZE + x;
 }
@@ -213,6 +232,7 @@ function inBounds(x, y) {
   return x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE;
 }
 
+// bazis pozicio es ellenfel bazisa
 function getBasePos(player) {
   var bm = BOARD_SIZE - 1;
   return player === "red" ? { x: 0, y: 0 } : { x: bm, y: bm };
@@ -222,6 +242,7 @@ function getEnemyBasePos(player) {
   return getBasePos(otherPlayer(player));
 }
 
+// jatekos adatok es cimkek
 function getPlayerData(p) {
   return gameState[p];
 }
@@ -234,11 +255,114 @@ function playerLabel(p) {
   return p === "red" ? "Piros" : "Kék";
 }
 
+function clampBaseHpValue(hp) {
+  var n = typeof hp === "number" ? hp : parseInt(hp, 10);
+  if (isNaN(n)) return 0;
+  return Math.max(0, n);
+}
+
+// bazis eletpont normalizalas
+function normalizeBaseHp() {
+  gameState.red.baseHp = clampBaseHpValue(gameState.red.baseHp);
+  gameState.blue.baseHp = clampBaseHpValue(gameState.blue.baseHp);
+}
+
+// gyozelmi feltetelek ellenorzese
+function getVictoryInfo() {
+  normalizeBaseHp();
+  var r = getPlayerData("red");
+  var b = getPlayerData("blue");
+  if (r.baseHp <= 0) {
+    return { winner: "blue", loser: "red", reason: "base" };
+  }
+  if (b.baseHp <= 0) {
+    return { winner: "red", loser: "blue", reason: "base" };
+  }
+  if (countUnits("red") === 0) {
+    return { winner: "blue", loser: "red", reason: "units" };
+  }
+  if (countUnits("blue") === 0) {
+    return { winner: "red", loser: "blue", reason: "units" };
+  }
+  return null;
+}
+
+// jatek vege status szoveg
+function gameEndStatusText(info) {
+  var winnerName = playerLabel(info.winner);
+  var loserName = playerLabel(info.loser);
+  if (info.reason === "base") {
+    return "Játék vége — " + loserName + " bázisa elpusztult. Győztes: " + winnerName + "!";
+  }
+  return "Játék vége — " + loserName + " játékos egységei elfogytak. Győztes: " + winnerName + "!";
+}
+
+// jatek vege alert szoveg
+function gameEndAlertText(info) {
+  var winnerName = playerLabel(info.winner);
+  var loserName = playerLabel(info.loser);
+  if (info.reason === "base") {
+    return (
+      "A " +
+      loserName +
+      " játékos bázisa 0 HP-ra esett és elpusztult.\n\nGyőztes: " +
+      winnerName +
+      "\nVesztes: " +
+      loserName
+    );
+  }
+  return (
+    "A " +
+    loserName +
+    " játékosnak nincs több egysége a pályán.\n\nGyőztes: " +
+    winnerName +
+    "\nVesztes: " +
+    loserName
+  );
+}
+
+// jatek vege ui visszaallitasa
+function clearGameEndState() {
+  gameEndAnnounced = false;
+  $("body").removeClass("game-over");
+  $("#panel-left, #panel-right").removeClass("info-panel-defeated info-panel-winner");
+}
+
+// gyozelmi uzenet megjelenitese
+function announceGameEnd(winner, options) {
+  options = options || {};
+  var info = getVictoryInfo();
+  if (info === null || info.winner !== winner) return;
+
+  stopTurnTimer();
+  selectedUnitId = null;
+  normalizeBaseHp();
+  $("body").addClass("game-over");
+  $("#panel-left").toggleClass("info-panel-defeated", info.loser === "red");
+  $("#panel-right").toggleClass("info-panel-defeated", info.loser === "blue");
+  $("#panel-left").toggleClass("info-panel-winner", info.winner === "red");
+  $("#panel-right").toggleClass("info-panel-winner", info.winner === "blue");
+
+  $("#status-line").html(gameEndStatusText(info));
+  updatePanels();
+  renderBoard();
+
+  if (!options.silent && !gameEndAnnounced) {
+    gameEndAnnounced = true;
+    alert(gameEndAlertText(info));
+  }
+}
+
 function victoryStatusText(winner, fullMessage) {
+  var info = getVictoryInfo();
+  if (info !== null && info.winner === winner) {
+    return gameEndStatusText(info);
+  }
   var name = playerLabel(winner);
   return fullMessage ? "Győzelem: " + name + " játékos nyert!" : "Győzelem: " + name;
 }
 
+// egyseg adatok es sebzes
 function getUnitInfo(type) {
   return UNIT_DATA[type] || { name: "?", symbol: "?", emoji: "•", hp: 2, damage: 0, moveRange: 1, costWood: 0, costGold: 0, canAttack: false };
 }
@@ -247,6 +371,7 @@ function getAttackDamage(attacker) {
   return getUnitInfo(attacker.type).damage;
 }
 
+// cella es egyseg kereses
 function $cellAt(x, y) {
   return $("#board .cell").eq(cellIndex(x, y));
 }
@@ -264,6 +389,7 @@ function getSelectedUnit() {
   return getUnitById(selectedUnitId);
 }
 
+// korido beallitas a selectbol
 function getTurnSecFromConfig() {
   var sec = parseInt($("#cfg-turnsec").val(), 10);
   return isNaN(sec) || sec < 10 ? 60 : sec;
@@ -279,6 +405,7 @@ function getUnitAt(x, y) {
   return null;
 }
 
+// bazis cella ellenorzes
 function isEnemyBaseCell(x, y, myPlayer) {
   var b = getEnemyBasePos(myPlayer);
   return x === b.x && y === b.y;
@@ -289,6 +416,7 @@ function isOwnBaseCell(x, y, myPlayer) {
   return x === b.x && y === b.y;
 }
 
+// lephet-e ide az egyseg
 function canWalkOnto(x, y, myPlayer) {
   var t = gameState.terrain[y][x];
   if (t === "base_red" || t === "base_blue") {
@@ -307,7 +435,7 @@ function getMoveRange(unit) {
   return getUnitInfo(unit.type).moveRange;
 }
 
-// Mozgáshoz: üres/cél cellák, 4 irány, katona/bányász: 1, felderítő: 2
+// mozgasi lehetosegek kirajzolasa (bfs)
 function getReachableCells(unit) {
   var res = [];
   var visited = {};
@@ -330,8 +458,6 @@ function getReachableCells(unit) {
       visited[kk] = true;
       res.push({ x: nx, y: ny });
       if (nd < maxD) {
-        // köztes lépés: csak ha mostani celláról továbbmehetünk (következő is szabad út)
-        // BFS: a sor elején cur.d a távolság; a szomszédok nd távolságon vannak
         q.push({ x: nx, y: ny, d: nd });
       }
     }
@@ -352,24 +478,13 @@ function countUnits(player) {
   return c;
 }
 
+// van-e mar gyoztes
 function checkVictory() {
-  var r = getPlayerData("red");
-  var b = getPlayerData("blue");
-  if (r.baseHp <= 0) {
-    return "blue";
-  }
-  if (b.baseHp <= 0) {
-    return "red";
-  }
-  if (countUnits("red") === 0) {
-    return "blue";
-  }
-  if (countUnits("blue") === 0) {
-    return "red";
-  }
-  return null;
+  var info = getVictoryInfo();
+  return info ? info.winner : null;
 }
 
+// korido szamlalo
 function stopTurnTimer() {
   if (turnTimerHandle !== null) {
     clearInterval(turnTimerHandle);
@@ -378,6 +493,7 @@ function stopTurnTimer() {
   $("#timer-line").removeClass("timer-critical");
 }
 
+// korido inditasa
 function startTurnTimer() {
   stopTurnTimer();
   var sec = getTurnSecFromConfig();
@@ -403,6 +519,7 @@ function startTurnTimer() {
   }, 1000);
 }
 
+// negyedik koronkent uj eroforras a kozepen
 function trySpawnCenterResource() {
   var pool = [
     [2, 2],
@@ -434,7 +551,9 @@ function trySpawnCenterResource() {
   return false;
 }
 
+// kor vege, kovetkezo jatekos
 function endTurn() {
+  if (checkVictory() !== null) return;
   stopTurnTimer();
   selectedUnitId = null;
   gameState.turnNumber = (typeof gameState.turnNumber === "number" ? gameState.turnNumber : 0) + 1;
@@ -451,7 +570,7 @@ function endTurn() {
   renderBoard();
   var w = checkVictory();
   if (w !== null) {
-    $("#status-line").html(victoryStatusText(w, true));
+    announceGameEnd(w);
     return;
   }
   startTurnTimer();
@@ -462,7 +581,6 @@ function pulseUnitCell(x, y) {
   var $stack = $cell.find(".unit-stack");
   if ($stack.length === 0) return;
   $stack.stop(true, true);
-  // opacity: nem tolja el a szöveget / igazítást, ellentétben a fontSize-mal
   $stack.animate({ opacity: 0.55 }, 70).animate({ opacity: 1 }, 70);
 }
 
@@ -476,23 +594,28 @@ function isMoveValid(unit, tx, ty) {
   return false;
 }
 
-// Mozgás logika animáció után (pozíció + gyűjtés)
+// mozgas utan pozicio es gyujtes
 function applyMoveResult(unit, tx, ty) {
   unit.x = tx;
   unit.y = ty;
   unit.acted = true;
 
   var ter = gameState.terrain[ty][tx];
+  var gathered = false;
   if (unit.type === "miner" && (ter === "wood" || ter === "gold")) {
     var pl = getPlayerData(unit.player);
     if (ter === "wood") pl.wood += GATHER_AMOUNT;
     else pl.gold += GATHER_AMOUNT;
     gameState.terrain[ty][tx] = "empty";
+    gathered = true;
     $("#status-line").html("Bányász gyűjtött! (+" + GATHER_AMOUNT + ")");
   }
+
+  playSound("move");
+  if (gathered) playSound("pickup");
 }
 
-// Új mezőre lépés: sima útvonal animáció jQuery .animate()-tel
+// mozgas animacio jquery-vel
 function animateUnitMove(unit, tx, ty, onDone) {
   if (!isMoveValid(unit, tx, ty)) {
     if (onDone) onDone(false);
@@ -528,7 +651,6 @@ function animateUnitMove(unit, tx, ty, onDone) {
   $stack.css("visibility", "hidden");
 
   var $floater = $('<div class="unit-move-floater"></div>');
-  // ugyanaz a belső elrendezés, mint a .cell-nél (flex-start + középre igazított oszlop)
   $floater.css({
     position: "fixed",
     left: vx0,
@@ -556,6 +678,7 @@ function animateUnitMove(unit, tx, ty, onDone) {
   );
 }
 
+// tamadas ellenorzes - bazis
 function tryAttackBase(attacker, tx, ty) {
   if (!getUnitInfo(attacker.type).canAttack) return false;
   if (!isEnemyBaseCell(tx, ty, attacker.player)) return false;
@@ -564,14 +687,15 @@ function tryAttackBase(attacker, tx, ty) {
 
   var dmg = getAttackDamage(attacker);
   var enemy = getPlayerData(otherPlayer(attacker.player));
-  enemy.baseHp -= dmg;
+  enemy.baseHp = clampBaseHpValue(enemy.baseHp - dmg);
   attacker.acted = true;
-  playSound("attack");
+  playAttackSound(attacker);
   pulseUnitCell(attacker.x, attacker.y);
-  $("#status-line").html("Bázist támadtál! Sebzés: " + dmg);
+  $("#status-line").html("Bázist támadtál! Sebzés: " + dmg + ". Ellenség bázis HP: " + enemy.baseHp);
   return true;
 }
 
+// tamadas ellenorzes - egyseg
 function tryAttackUnit(attacker, target) {
   if (!getUnitInfo(attacker.type).canAttack) return false;
   if (target.player === attacker.player) return false;
@@ -581,7 +705,7 @@ function tryAttackUnit(attacker, target) {
   var dmg = getAttackDamage(attacker);
   target.hp -= dmg;
   attacker.acted = true;
-  playSound("attack");
+  playAttackSound(attacker);
   pulseUnitCell(attacker.x, attacker.y);
 
   if (target.hp <= 0) {
@@ -596,6 +720,7 @@ function tryAttackUnit(attacker, target) {
   return true;
 }
 
+// uj egyseg spawn helye a bazis mellett
 function findSpawnCell(player) {
   var base = getBasePos(player);
   var bx = base.x;
@@ -622,6 +747,7 @@ function findSpawnCell(player) {
   return null;
 }
 
+// uj egyseg letrehozasa
 function makeUnit(type, player, x, y) {
   return {
     id: nextUnitId++,
@@ -634,7 +760,9 @@ function makeUnit(type, player, x, y) {
   };
 }
 
+// egyseg epitese (koltseg levonas)
 function buildUnit(type) {
+  if (checkVictory() !== null) return;
   var p = gameState.currentPlayer;
   var pl = getPlayerData(p);
   var info = getUnitInfo(type);
@@ -650,14 +778,16 @@ function buildUnit(type) {
   pl.wood -= info.costWood;
   pl.gold -= info.costGold;
   gameState.units.push(makeUnit(type, p, spot.x, spot.y));
-  playSound("click");
+  playSound("spawn");
   updatePanels();
   renderBoard();
   $("#status-line").html("Új egység: " + type);
 }
 
+// jatek inditasa, palya generalas
 function initGame() {
   stopTurnTimer();
+  clearGameEndState();
   nextUnitId = 1;
   selectedUnitId = null;
 
@@ -709,7 +839,9 @@ function initGame() {
   if (w === null) startTurnTimer();
 }
 
+// oldalso panelek frissitese
 function updatePanels() {
+  normalizeBaseHp();
   $("#res-red-wood").html(String(gameState.red.wood));
   $("#res-red-gold").html(String(gameState.red.gold));
   $("#hp-red-base").html(String(gameState.red.baseHp));
@@ -732,6 +864,7 @@ function terrainBlockHtml(t) {
   return TERRAIN_BLOCKS[t] || "";
 }
 
+// tabla kirajzolasa
 function renderBoard() {
   var $b = $("#board");
   $b.empty();
@@ -742,6 +875,8 @@ function renderBoard() {
       var t = gameState.terrain[y][x];
       var u = getUnitAt(x, y);
       var cls = "cell " + terrainClass(t);
+      if (t === "base_red" && gameState.red.baseHp <= 0) cls += " base-defeated";
+      if (t === "base_blue" && gameState.blue.baseHp <= 0) cls += " base-defeated";
       if (u !== null) cls += " has-unit";
       var $cell = $('<div class="' + cls + '" data-x="' + x + '" data-y="' + y + '"></div>');
 
@@ -773,6 +908,7 @@ function renderBoard() {
     }
   }
 
+  // kivalasztott egyseg es mozgas/tamadas jeloles
   var su = getSelectedUnit();
   if (su !== null) {
     $cellAt(su.x, su.y).addClass("selected");
@@ -797,6 +933,7 @@ function renderBoard() {
   }
 }
 
+// cella kattintas kezelese
 function onCellClick(x, y) {
   if (moveAnimationActive) return;
 
@@ -804,14 +941,14 @@ function onCellClick(x, y) {
 
   var w = checkVictory();
   if (w !== null) {
-    $("#status-line").html("A játék véget ért.");
+    announceGameEnd(w, { silent: true });
     return;
   }
 
   var clickedUnit = getUnitAt(x, y);
   var su = getSelectedUnit();
 
-  // egység kiválasztás
+  // egyseg kivalasztas
   if (clickedUnit !== null && clickedUnit.player === gameState.currentPlayer) {
     selectedUnitId = clickedUnit.id;
     $("#status-line").html("Kiválasztva: " + clickedUnit.type);
@@ -819,37 +956,35 @@ function onCellClick(x, y) {
     return;
   }
 
-  // támadás egységre
+  // tamadas egysegre
   if (su !== null && clickedUnit !== null && clickedUnit.player !== su.player) {
     if (tryAttackUnit(su, clickedUnit)) {
       updatePanels();
       renderBoard();
       w = checkVictory();
       if (w !== null) {
-        stopTurnTimer();
-        $("#status-line").html(victoryStatusText(w, false));
+        announceGameEnd(w);
         return;
       }
     }
     return;
   }
 
-  // bázis támadása (cella: ellenséges bázis)
+  // tamadas bazisra
   if (su !== null && clickedUnit === null) {
     if (tryAttackBase(su, x, y)) {
       updatePanels();
       renderBoard();
       w = checkVictory();
       if (w !== null) {
-        stopTurnTimer();
-        $("#status-line").html(victoryStatusText(w, false));
+        announceGameEnd(w);
         return;
       }
       return;
     }
   }
 
-  // mozgás (animált új pozíció)
+  // mozgas uj cellara
   if (su !== null && clickedUnit === null) {
     if (!isMoveValid(su, x, y)) return;
     animateUnitMove(su, x, y, function () {
@@ -858,13 +993,13 @@ function onCellClick(x, y) {
       pulseUnitCell(su.x, su.y);
       var ww = checkVictory();
       if (ww !== null) {
-        stopTurnTimer();
-        $("#status-line").html(victoryStatusText(ww, false));
+        announceGameEnd(ww);
       }
     });
   }
 }
 
+// mentes localstorage-be
 function saveGame() {
   var pack = {
     gs: gameState,
@@ -875,6 +1010,7 @@ function saveGame() {
   alert("Mentve a böngészőbe (localStorage).");
 }
 
+// betoltes localstorage-bol
 function loadGame() {
   var raw = localStorage.getItem("islandorsSave");
   if (raw === null || raw === "") {
@@ -895,7 +1031,9 @@ function loadGame() {
       return;
     }
     gameState = gs;
+    clearGameEndState();
     if (typeof gameState.turnNumber !== "number") gameState.turnNumber = 0;
+    normalizeBaseHp();
     selectedUnitId = pack.selectedUnitId;
     nextUnitId = pack.nextUnitId || 100;
     if (gameState.theme === "dark") {
@@ -909,12 +1047,13 @@ function loadGame() {
     $("#status-line").html("Betöltve. Most lép: " + playerLabel(gameState.currentPlayer));
     var w = checkVictory();
     if (w === null) startTurnTimer();
-    else $("#status-line").html("Ez a mentés már befejezett játékot tartalmaz.");
+    else announceGameEnd(w, { silent: true });
   } catch (e) {
     alert("Hibás mentés fájl.");
   }
 }
 
+// tema valtas vilagos / sotet
 function toggleTheme() {
   $("body").toggleClass("theme-light");
   $("body").toggleClass("theme-dark");
@@ -925,6 +1064,7 @@ function toggleTheme() {
   }
 }
 
+// hatterzene kezelese
 function getBgMusic() {
   return document.getElementById("bg-music");
 }
@@ -947,9 +1087,11 @@ function stopBgMusic() {
   music.currentTime = 0;
 }
 
+// kezdo kepernyo (menu)
 function showStartScreen() {
   stopTurnTimer();
   stopBgMusic();
+  clearGameEndState();
   gameSessionActive = false;
   startScreenDismissed = false;
   $("body").addClass("at-menu");
@@ -998,15 +1140,18 @@ function beginLoadFromMenu() {
   });
 }
 
+// esemenykezelok es jquery indulas
 $(function () {
-  $("body").addClass("theme-light");
+  $("body").removeClass("theme-light").addClass("theme-dark");
 
+  // tabla cella kattintas
   $("#board").on("click", ".cell", function () {
     var x = parseInt($(this).data("x"), 10);
     var y = parseInt($(this).data("y"), 10);
     onCellClick(x, y);
   });
 
+  // menu gombok
   $("#btn-start-game").click(function () {
     playSound("click");
     startBgMusic();
@@ -1015,9 +1160,11 @@ $(function () {
 
   $("#btn-load-menu").click(function () {
     playSound("click");
+    startBgMusic();
     beginLoadFromMenu();
   });
 
+  // jatek gombok
   $("#btn-new").click(function () {
     playSound("click");
     initGame();
@@ -1039,6 +1186,7 @@ $(function () {
     $("#rules-box").dialog("open");
   });
 
+  // szabaly es segitseg ablakok
   $("#help-box").dialog({
     autoOpen: false,
     width: 660,
@@ -1066,7 +1214,9 @@ $(function () {
     var music = getBgMusic();
     if (!music) return;
     music.muted = !music.muted;
-    $(this).text(music.muted ? "🔇 Némítva" : "🔊 Hang");
+    $(this).text(music.muted ? "🔇" : "🔊");
+    $(this).attr("title", music.muted ? "Némítva" : "Hang");
+    $(this).attr("aria-label", music.muted ? "Némítva" : "Hang");
   });
 
   $("#btn-endturn").click(function () {
@@ -1074,6 +1224,7 @@ $(function () {
     endTurn();
   });
 
+  // egyseg epites gombok
   $("#btn-build-miner").click(function () {
     buildUnit("miner");
   });
@@ -1084,14 +1235,14 @@ $(function () {
     buildUnit("scout");
   });
 
-  // billentyű: Enter = kör vége
+  // enter = kor vege
   $(document).keydown(function (e) {
     if (e.key === "Enter" && gameSessionActive) {
       endTurn();
     }
   });
 
-  // egér mozgás: státusz frissítése (második interakció típus)
+  // eger mozgas: timer sor visszaallitasa
   $(document).mousemove(function () {
     $("#timer-line").css("opacity", "1");
   });

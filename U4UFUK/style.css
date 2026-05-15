@@ -1,4 +1,4 @@
-/* Islandors — modern island / strategy HUD */
+/* islandors - fo szinek es valtozok */
 
 :root {
   --font-ui: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -23,13 +23,14 @@
   --cell-grass-1: #d4f4dd;
   --cell-grass-2: #9ae6b4;
   --cell-frame: #1e5a6b;
-  /* Játéktábla — responsive cellaméret (6×6 rács) */
-  --tile-size: 72px;
+  /* tabla cella meret (6x6, responsive) */
+  --tile-size: clamp(58px, min(9.5vh, calc((100vh - 210px) / 6.5)), 78px);
   --board-cell: var(--tile-size);
-  --board-gap: 4px;
-  --board-pad: 8px;
+  --board-gap: 3px;
+  --board-pad: 6px;
 }
 
+/* sotet tema felulirja a szineket */
 body.theme-dark {
   --shadow-soft: 0 4px 18px rgba(0, 0, 0, 0.32);
   --shadow-lift: 0 10px 28px rgba(0, 0, 0, 0.38);
@@ -47,6 +48,7 @@ body.theme-dark {
   --cell-frame: #475569;
 }
 
+/* alap reset */
 * {
   box-sizing: border-box;
 }
@@ -55,6 +57,7 @@ html {
   scroll-behavior: smooth;
 }
 
+/* oldal es jatek layout */
 body {
   font-family: var(--font-ui);
   margin: 0;
@@ -65,28 +68,124 @@ body {
   background: #e8ecf1;
 }
 
+body:not(.at-menu) {
+  height: 100vh;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  padding: 8px 12px 10px;
+}
+
 body.theme-dark {
   background: #0f1419;
 }
 
 #wrap {
-  max-width: 1220px;
+  max-width: 1380px;
   margin: 0 auto;
 }
 
-/* ——— Title ——— */
+body:not(.at-menu) #wrap {
+  min-height: 100%;
+  max-height: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* fejlec cim */
 .game-header {
+  position: relative;
   text-align: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+  padding-right: 200px;
+  padding-left: 16px;
+}
+
+.top-icon-actions {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 2;
+}
+
+.icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(15, 23, 42, 0.28);
+}
+
+.icon-btn:active {
+  opacity: 0.82;
+}
+
+.icon-btn:focus-visible {
+  outline: 2px solid var(--accent-teal);
+  outline-offset: 2px;
+}
+
+body.theme-dark .icon-btn {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(148, 163, 184, 0.22);
+  color: var(--text);
+}
+
+body.theme-dark .icon-btn:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(148, 163, 184, 0.38);
+}
+
+body:not(.at-menu) .game-header {
+  margin-bottom: 6px;
+  padding-right: 188px;
+}
+
+body:not(.at-menu) .top-icon-actions {
+  top: 6px;
+  right: 12px;
+  gap: 6px;
+}
+
+body:not(.at-menu) .icon-btn {
+  width: 34px;
+  height: 34px;
+  font-size: 0.92rem;
 }
 
 #main-title {
   margin: 0;
-  font-size: clamp(1.65rem, 4vw, 2.15rem);
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: none;
   color: #0f172a;
+  line-height: 1.15;
+}
+
+body:not(.at-menu) #main-title {
+  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
 }
 
 body.theme-dark #main-title {
@@ -94,42 +193,404 @@ body.theme-dark #main-title {
 }
 
 .game-tagline {
-  margin: 8px 0 0;
+  margin: 2px 0 0;
   font-size: 0.9rem;
   font-weight: 600;
   color: rgba(15, 23, 42, 0.72);
   letter-spacing: 0.04em;
 }
 
+body:not(.at-menu) .game-tagline {
+  margin-top: 2px;
+  font-size: 0.78rem;
+}
+
 body.theme-dark .game-tagline {
   color: rgba(148, 163, 184, 0.92);
 }
 
+/* fo elrendezes: oldalso sav + tabla */
 #layout {
   display: block;
+  width: 100%;
+}
+
+body:not(.at-menu) #layout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.game-layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+}
+
+body:not(.at-menu) .game-layout {
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.game-sidebar {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+body:not(.at-menu) .game-sidebar {
+  position: static;
+  top: auto;
+  max-height: 100%;
+  height: 100%;
+  overflow: hidden;
+  gap: 8px;
+}
+
+.game-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+body:not(.at-menu) .game-main {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  justify-content: center;
 }
 
 #center {
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
-/* ——— Control HUD ——— */
+body:not(.at-menu) #center {
+  flex: 1;
+  min-height: 0;
+  justify-content: center;
+  padding: 0;
+}
+
+/* oldalso sav - gombok es panelek */
 .controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+}
+
+body:not(.at-menu) .controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+}
+
+/* oldalso sav kartya */
+.sidebar-card {
   background: var(--hud-bg);
   border: 1px solid var(--hud-border);
   border-radius: var(--radius-md);
-  padding: 10px 12px 12px;
-  margin-bottom: 12px;
+  padding: 12px 14px;
+  box-shadow: var(--shadow-soft);
+  flex-shrink: 0;
+}
+
+body:not(.at-menu) .sidebar-card {
+  padding: 8px 10px;
+}
+
+body.theme-dark .sidebar-card {
   box-shadow: var(--shadow-soft);
 }
 
-body.theme-dark .controls {
-  box-shadow: var(--shadow-soft);
+.sidebar-btn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
 }
 
-/* Top bar: game | turn (status + timer + end) | utils */
+body:not(.at-menu) .sidebar-btn-grid {
+  gap: 6px;
+}
+
+.sidebar-btn-grid .btn-ctrl {
+  width: 100%;
+  justify-content: center;
+}
+
+.sidebar-btn-grid .btn-ctrl:nth-child(3):last-child {
+  grid-column: 1 / -1;
+}
+
+.sidebar-exit {
+  margin-top: auto;
+}
+
+.sidebar-exit .btn-exit-sidebar {
+  width: 100%;
+  justify-content: center;
+}
+
+body:not(.at-menu) .sidebar-exit {
+  flex-shrink: 0;
+}
+
+.sidebar-build-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.sidebar-build-stack .btn-build {
+  width: 100%;
+}
+
+body:not(.at-menu) .sidebar-build-stack {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+body:not(.at-menu) .sidebar-build-stack .btn-build {
+  min-height: 50px;
+  padding: 6px 4px;
+}
+
+body:not(.at-menu) .btn-build-title {
+  font-size: 0.78rem;
+}
+
+body:not(.at-menu) .btn-build-cost {
+  font-size: 0.65rem;
+}
+
+.sidebar-players {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+body:not(.at-menu) .sidebar-players {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+body:not(.at-menu) .sidebar-players > .hud-section-label {
+  grid-column: 1 / -1;
+}
+
+.sidebar-players .info-panel {
+  width: 100%;
+  align-self: stretch;
+}
+
+.sidebar-players .info-panel h2 {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+body:not(.at-menu) .sidebar-players .info-panel {
+  padding: 8px 9px;
+}
+
+body:not(.at-menu) .sidebar-players .info-panel h2 {
+  margin-bottom: 6px;
+  padding-bottom: 5px;
+  font-size: 0.82rem;
+}
+
+.sidebar-players .res-line {
+  margin-bottom: 8px;
+}
+
+body:not(.at-menu) .sidebar-players .res-line {
+  margin-bottom: 4px;
+  font-size: 0.78rem;
+  gap: 5px;
+}
+
+body:not(.at-menu) .sidebar-players .res-ic {
+  font-size: 0.95rem;
+}
+
+.sidebar-players .turn-mark {
+  padding: 8px 10px;
+  min-height: 2.2em;
+  font-size: 0.82rem;
+}
+
+body:not(.at-menu) .sidebar-players .turn-mark {
+  padding: 4px 6px;
+  min-height: 0;
+  font-size: 0.72rem;
+}
+
+.game-sidebar .control-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.game-sidebar .control-row .hud-section-label {
+  flex: none;
+}
+
+.game-sidebar .hud-section-turn::before {
+  inset: 0;
+}
+
+.game-sidebar #btn-endturn.btn-endturn-prominent {
+  width: 100%;
+}
+
+.game-sidebar #status-line,
+.game-sidebar #timer-line {
+  width: 100%;
+}
+
+.game-sidebar .hud-section {
+  gap: 6px;
+}
+
+body:not(.at-menu) .game-sidebar .hud-section-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+}
+
+.game-sidebar .hud-turn-cluster {
+  gap: 10px;
+}
+
+body:not(.at-menu) .game-sidebar .hud-turn-cluster {
+  gap: 6px;
+}
+
+.game-sidebar .inline-label-turn {
+  justify-content: space-between;
+}
+
+body:not(.at-menu) .game-sidebar .inline-label-turn {
+  font-size: 0.78rem;
+}
+
+.game-sidebar .select-turn {
+  flex: 1;
+  max-width: 120px;
+}
+
+body:not(.at-menu) .game-sidebar .select-turn {
+  padding: 6px 8px;
+  font-size: 0.78rem;
+}
+
+body:not(.at-menu) .game-sidebar .btn-ctrl {
+  min-height: 34px;
+  padding: 6px 8px;
+  font-size: 0.78rem;
+}
+
+body:not(.at-menu) .game-sidebar #btn-endturn.btn-endturn-prominent {
+  min-height: 36px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+}
+
+body:not(.at-menu) #status-line {
+  min-height: 2rem;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
+body:not(.at-menu) #timer-line {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
+/* kisebb kepernyo - egy oszlop */
+@media (max-width: 900px), (max-height: 720px) {
+  body:not(.at-menu) {
+    height: auto;
+    max-height: none;
+    overflow: auto;
+  }
+
+  body:not(.at-menu) #wrap {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  body:not(.at-menu) #layout {
+    overflow: visible;
+  }
+
+  .game-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .game-sidebar {
+    position: static;
+    max-height: none;
+    height: auto;
+    overflow: visible;
+  }
+
+  body:not(.at-menu) .game-sidebar {
+    overflow: visible;
+  }
+
+  body:not(.at-menu) .controls {
+    overflow: visible;
+  }
+
+  body:not(.at-menu) .game-main {
+    height: auto;
+    overflow: visible;
+  }
+
+  body:not(.at-menu) #center {
+    min-height: 0;
+  }
+
+  body:not(.at-menu) .sidebar-players {
+    grid-template-columns: 1fr;
+  }
+
+  body:not(.at-menu) .sidebar-build-stack {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* felso hud sor (regi layout) */
 .hud-top {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(240px, 1.25fr) minmax(0, 1fr);
@@ -239,6 +700,22 @@ body.theme-dark .hud-section-turn::before {
 }
 
 @media (max-width: 560px) {
+  .game-header {
+    padding-right: 16px;
+    padding-left: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .top-icon-actions {
+    position: static;
+    order: -1;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
   .hud-top {
     display: flex;
     flex-direction: column;
@@ -325,6 +802,7 @@ body.theme-dark .row-label {
   }
 }
 
+/* gombok altalanos stilusa */
 .btn-ctrl {
   padding: 8px 14px;
   font-size: 0.84rem;
@@ -339,6 +817,7 @@ body.theme-dark .row-label {
   transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 }
 
+/* hover effekt */
 .btn-ctrl:hover {
   background: #f1f5f9;
   border-color: rgba(13, 148, 136, 0.45);
@@ -396,7 +875,7 @@ body.theme-dark .btn-primary:hover {
   background: #0d9488;
 }
 
-/* Primary turn action — stands next to timer */
+/* kor vege gomb kiemelve */
 #btn-endturn.btn-endturn-prominent {
   display: inline-flex;
   align-items: center;
@@ -475,6 +954,7 @@ body.theme-dark .select-turn {
   color: var(--text);
 }
 
+/* egyseg epites gombok */
 .btn-build {
   display: flex;
   flex-direction: column;
@@ -532,7 +1012,7 @@ body.theme-dark .btn-build:hover {
   line-height: 1.25;
 }
 
-/* ——— Status + timer (inside turn HUD) ——— */
+/* status sor es korido */
 #status-line {
   margin: 0;
   width: 100%;
@@ -618,26 +1098,22 @@ body.theme-dark #timer-line.timer-critical {
   border-color: rgba(248, 113, 113, 0.4);
 }
 
-/* ——— Board row + player panels ——— */
-.board-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(10px, 1.5vw, 16px);
-  margin-top: 4px;
-}
-
+/* tabla keret */
 #board-wrap {
   flex: 0 0 auto;
   max-width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 10px;
+  padding: 12px;
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(15, 23, 42, 0.1);
   box-shadow: var(--shadow-soft);
+  margin: 0 auto;
+}
+
+body:not(.at-menu) #board-wrap {
+  padding: 8px;
 }
 
 body.theme-dark #board-wrap {
@@ -646,19 +1122,24 @@ body.theme-dark #board-wrap {
   box-shadow: var(--shadow-soft);
 }
 
+/* jatekos panel */
 .info-panel {
-  width: clamp(168px, 17vw, 196px);
+  width: 100%;
   flex: 0 0 auto;
-  border-radius: var(--radius-md);
-  padding: 12px 14px;
-  background: var(--hud-bg);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.55);
   border: 1px solid var(--hud-border);
-  box-shadow: var(--shadow-soft);
+  box-shadow: none;
   min-height: 0;
-  align-self: center;
+  align-self: stretch;
   display: flex;
   flex-direction: column;
   transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+body.theme-dark .sidebar-players .info-panel {
+  background: rgba(15, 23, 42, 0.35);
 }
 
 .info-panel h2 {
@@ -754,7 +1235,7 @@ body.theme-dark .turn-mark {
   background: rgba(0, 0, 0, 0.2);
 }
 
-/* Active player — quiet highlight */
+/* aktiv jatekos kiemeles */
 .info-panel-red.info-panel-active {
   border-color: rgba(248, 113, 113, 0.5);
   background: #fff5f5;
@@ -789,44 +1270,66 @@ body.theme-dark .info-panel-active .turn-mark {
   color: #e2e8f0;
 }
 
-@media (max-width: 720px) {
-  .board-row {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .info-panel {
-    width: 100%;
-    max-width: 360px;
-    min-height: 0;
-  }
+/* gyoztes es vesztes panel */
+.info-panel-winner {
+  border-color: rgba(34, 197, 94, 0.65) !important;
+  box-shadow:
+    0 0 0 2px rgba(34, 197, 94, 0.25),
+    var(--shadow-soft);
 }
 
-@media (max-width: 1200px) {
+.info-panel-defeated {
+  opacity: 0.72;
+  filter: grayscale(0.35);
+  border-color: rgba(100, 116, 139, 0.45) !important;
+}
+
+body.theme-dark .info-panel-winner {
+  border-color: rgba(74, 222, 128, 0.55) !important;
+}
+
+body.game-over #status-line {
+  background: linear-gradient(135deg, #fef9c3 0%, #fde68a 100%);
+  border-color: rgba(202, 138, 4, 0.45);
+  color: #713f12;
+  font-weight: 800;
+}
+
+body.theme-dark.game-over #status-line {
+  background: linear-gradient(135deg, #422006 0%, #713f12 100%);
+  border-color: rgba(250, 204, 21, 0.4);
+  color: #fef08a;
+}
+
+.cell.base-defeated {
+  filter: grayscale(0.55) brightness(0.88);
+  opacity: 0.9;
+}
+
+/* tabla meret - tablet */
+@media (max-width: 900px) {
   :root {
-    --tile-size: 64px;
-    --board-gap: 4px;
-    --board-pad: 7px;
+    --tile-size: clamp(52px, min(8.5vh, 12vw), 68px);
   }
 }
 
+/* tabla meret - mobil */
 @media (max-width: 680px) {
   :root {
-    --tile-size: 56px;
-    --board-gap: 3px;
-    --board-pad: 6px;
-  }
-}
-
-@media (max-width: 480px) {
-  :root {
-    --tile-size: 52px;
+    --tile-size: clamp(48px, 11vw, 56px);
     --board-gap: 3px;
     --board-pad: 5px;
   }
 }
 
-/* ——— Game board ——— */
+@media (max-width: 480px) {
+  :root {
+    --tile-size: clamp(44px, 10.5vw, 52px);
+    --board-pad: 4px;
+  }
+}
+
+/* jatek tabla 6x6 */
 #board {
   display: grid;
   grid-template-columns: repeat(6, var(--tile-size));
@@ -852,6 +1355,7 @@ body.theme-dark #board {
     0 14px 36px rgba(0, 0, 0, 0.55);
 }
 
+/* egy cella a tablan */
 .cell {
   width: var(--tile-size);
   height: var(--tile-size);
@@ -881,6 +1385,7 @@ body.theme-dark #board {
     filter 0.2s ease;
 }
 
+/* cella hover */
 .cell:hover {
   filter: brightness(1.03);
   z-index: 1;
@@ -896,6 +1401,7 @@ body.theme-dark .cell {
   color: #e2e8f0;
 }
 
+/* piros es kek bazis mezo */
 .cell.base-red {
   background: linear-gradient(155deg, #fecaca 0%, #f87171 45%, #ef4444 100%);
   border-color: rgba(127, 29, 29, 0.35);
@@ -932,22 +1438,110 @@ body.theme-dark .cell.gold {
   background: linear-gradient(165deg, #713f12 0%, #a16207 100%);
 }
 
+/* kivalasztott cella */
 .cell.selected {
-  outline: 2px solid #ca8a04;
-  outline-offset: -1px;
-  z-index: 3;
-  box-shadow: inset 0 0 0 1px rgba(202, 138, 4, 0.25);
+  outline: 3px solid #facc15;
+  outline-offset: -4px;
+  box-shadow:
+    inset 0 0 0 3px rgba(250, 204, 21, 0.95),
+    0 0 0 2px rgba(250, 204, 21, 0.25);
+  z-index: 7;
 }
 
+/* mozgasi jeloles */
 .cell.move-hint {
-  box-shadow: inset 0 0 0 2px rgba(14, 165, 233, 0.65);
+  outline: 3px solid #22d3ee;
+  outline-offset: -4px;
+  box-shadow:
+    inset 0 0 0 3px rgba(34, 211, 238, 0.95),
+    0 0 0 2px rgba(34, 211, 238, 0.25);
+  z-index: 2;
 }
 
+.cell.move-hint::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(34, 211, 238, 0.85);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* tamadasi jeloles */
 .cell.attack-hint {
-  box-shadow: inset 0 0 0 2px rgba(239, 68, 68, 0.65);
+  outline: 3px solid #ef4444;
+  outline-offset: -4px;
+  box-shadow:
+    inset 0 0 0 3px rgba(239, 68, 68, 0.95),
+    0 0 0 2px rgba(239, 68, 68, 0.25);
+  z-index: 3;
 }
 
-/* Terrain labels — top strip; compact when sharing tile with a unit */
+.cell.attack-hint::after {
+  content: "!";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: #ef4444;
+  color: white;
+  font-weight: 800;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.cell.attack-hint.move-hint {
+  outline: 3px solid #ef4444;
+  box-shadow:
+    inset 0 0 0 3px rgba(239, 68, 68, 0.95),
+    0 0 0 2px rgba(239, 68, 68, 0.25);
+}
+
+.cell.attack-hint.move-hint::after {
+  content: "!";
+  background: #ef4444;
+}
+
+body.theme-dark .cell.selected {
+  outline-color: #fde047;
+  box-shadow:
+    inset 0 0 0 3px rgba(253, 224, 71, 0.95),
+    0 0 0 2px rgba(253, 224, 71, 0.35);
+}
+
+body.theme-dark .cell.move-hint {
+  outline-color: #67e8f9;
+  box-shadow:
+    inset 0 0 0 3px rgba(103, 232, 249, 0.95),
+    0 0 0 2px rgba(103, 232, 249, 0.35);
+}
+
+body.theme-dark .cell.move-hint::after {
+  background: rgba(103, 232, 249, 0.9);
+  border-color: rgba(255, 255, 255, 0.9);
+}
+
+body.theme-dark .cell.attack-hint,
+body.theme-dark .cell.attack-hint.move-hint {
+  outline-color: #f87171;
+  box-shadow:
+    inset 0 0 0 3px rgba(248, 113, 113, 0.95),
+    0 0 0 2px rgba(248, 113, 113, 0.35);
+}
+
+/* terep ikon es felirat */
 .terrain-block {
   display: flex;
   flex-direction: column;
@@ -987,7 +1581,7 @@ body.theme-dark .terrain-lbl {
   font-size: clamp(6px, calc(var(--board-cell) * 0.118), 10px);
 }
 
-/* Shared tile: reserve top band for terrain, bottom for unit (no overlap) */
+/* ha van egyseg is a cellan */
 .cell.has-unit,
 .cell:has(.unit-stack) {
   justify-content: space-between;
@@ -1027,7 +1621,7 @@ body.theme-dark .terrain-lbl {
   font-size: clamp(5px, calc(var(--board-cell) * 0.095), 8px);
 }
 
-/* Unit stack */
+/* egyseg megjelenites a cellan */
 .unit-stack {
   align-self: stretch;
   width: 100%;
@@ -1155,6 +1749,7 @@ body.theme-dark .unit-hp {
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* mozgas animacio lebego elem */
 .unit-move-floater {
   display: flex;
   flex-direction: column;
@@ -1174,13 +1769,25 @@ body.theme-dark .unit-move-floater {
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
 }
 
-/* Footer */
+/* lablec */
 #footer-creator {
-  margin-top: 32px;
+  margin-top: 10px;
   text-align: center;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: rgba(15, 23, 42, 0.55);
+  flex-shrink: 0;
+}
+
+.game-main #footer-creator {
+  margin-top: 8px;
+  padding-bottom: 4px;
+}
+
+body:not(.at-menu) .game-main #footer-creator {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  line-height: 1.25;
 }
 
 body.theme-dark #footer-creator {
@@ -1191,7 +1798,7 @@ body.theme-dark #footer-creator {
   font-weight: 800;
 }
 
-/* ——— Rules + help modal (jQuery UI + #rules-box / #help-box) ——— */
+/* szabaly es segitseg popup */
 .ui-dialog.rules-modal-shell {
   max-width: min(900px, calc(100vw - 32px)) !important;
   border-radius: 18px !important;
@@ -1507,7 +2114,7 @@ body.theme-light .ui-dialog.rules-modal-shell .ui-dialog-titlebar-close:hover {
   border-color: rgba(13, 148, 136, 0.35) !important;
 }
 
-/* jQuery UI dialog — closer to game theme */
+/* jquery ui dialog altalanos */
 .ui-widget-overlay {
   background: rgba(15, 23, 42, 0.42);
   backdrop-filter: blur(2px);
@@ -1553,7 +2160,7 @@ body.theme-dark .ui-dialog {
   border-color: rgba(51, 65, 85, 0.55) !important;
 }
 
-/* ——— Start screen / main menu ——— */
+/* kezdo menu kepernyo */
 .start-screen {
   position: fixed;
   inset: 0;
@@ -1704,6 +2311,7 @@ body:not(.at-menu) .game-shell {
   user-select: auto;
 }
 
+/* kevesebb animacio ha a user azt kerte */
 @media (prefers-reduced-motion: reduce) {
   .info-panel-red.info-panel-active,
   .info-panel-blue.info-panel-active,
