@@ -639,6 +639,7 @@ function animateUnitMove(unit, tx, ty, onDone) {
   var h = $fromCell.outerHeight();
   var p0 = $fromCell.offset();
   var p1 = $toCell.offset();
+  // Mivel a játékos görgetheti is az oldalt (fel-le, jobbra-balra), le kell vonni a görgetés értékét a koordinátákból
   var sl = $(window).scrollLeft();
   var st = $(window).scrollTop();
   var vx0 = p0.left - sl;
